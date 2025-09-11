@@ -219,7 +219,7 @@ _The configuration includes the actual components which is not visible below, wh
 
 ## Integrating with UI libraries
 
-Void router, as most router libraries, expose hooks to allow better integration with (some) UI libraries that can be configured to use the router mechanism inside its UI components like tabs, listboxes, buttons etc. The hook `useNavigate()` handles client-side navigation and `useHref()` can translate router hrefs to native HTML hrefs. Example below is based on HeroUI.
+Stacked router, as most router libraries, expose hooks to allow better integration with (some) UI libraries that can be configured to use the router mechanism inside its UI components like tabs, listboxes, buttons etc. The hook `useNavigate()` handles client-side navigation and `useHref()` can translate router hrefs to native HTML hrefs. Example below is based on HeroUI.
 
 ```jsx
 import { StackedViewGroup } from 'stacked-router'
@@ -274,7 +274,7 @@ import { Ellipsis } from 'lucide-react'
 
 **shadcn example**
 
-Integration with shadcn is different as it does not provide the same convenience context. Most shadcn components that need navigation (like Button, NavigationMenu) accept an `asChild` prop which makes it easy to wrap the void router `Link` component.
+Integration with shadcn is different as it does not provide the same convenience context. Most shadcn components that need navigation (like Button, NavigationMenu) accept an `asChild` prop which makes it easy to wrap the stacked router `Link` component.
 
 ```jsx
 import { Button } from '@/components/ui/button'
