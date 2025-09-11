@@ -25,7 +25,8 @@
     "build:types": "tsc -p tsconfig.lib.json --noEmit false",
     "test": "vitest",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preversion": "npm test && npm run build",
+    "postversion": "git push && git push --tags"
   },
   "peerDependencies": {
     "react": "^19.1.0",
