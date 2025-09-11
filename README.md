@@ -1,8 +1,39 @@
 # stacked-router
 
-A client side file based router with path mapping to component props.
+A client side only, file based, router with path mapping to _"view component_ props. Treats opened views as a stack of cards. When a new view (route) is opened this view is added to the top of the stack. As long as enough screen estate is available for all open views they can be displayed side by side. If not the leftmost is hidden until on smaller screens only one view is visible.
 
-## Basic usage and concepts
+The router maintains the browser history and navigation and include utilities to integrate with modern UI libraries navigation. The browser location always matches the focused view which allows links to individual views to be copied and shared.
+
+## Basic idea
+
+Allow placing multiple views side by side on large screens but still degrade gracefully on smaller screens (mobile). Mobile friendly should also be large desktop screen friendly.
+
+Smaller screens/viewports stacks views on top of each other, hiding views that don't receive as much space as they want..
+
+```text
+..........
+. ..........
+. . ..........
+. . . __________
+. . . |        |
+... . |        |
+  ... |        |
+    ..|        |
+      ----------
+```
+
+Based on the minimum screen estate each view require, a larger screen/viewport could display more views if possible. Open views that do not receive enough screen estate will be hidden.
+
+```text
+..........
+. ---------- ---------- ----------
+. |        | |        | |        |
+. |        | |        | |        |
+. |        | |        | |        |
+..|        | |        | |        |
+  ---------- ---------- ----------
+```
+## Usage and concepts
 
 **main.tsx**
 
