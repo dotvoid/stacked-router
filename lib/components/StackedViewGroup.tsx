@@ -122,6 +122,7 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
             duration={duration}
             params={params}
             queryParams={view.queryParams}
+            props={view.props}
           >
             <LayoutWrapper>
               {!!Component && <Component {...params || {}} />}

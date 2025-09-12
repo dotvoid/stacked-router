@@ -25,6 +25,7 @@ export interface RouterState {
     options: {
       append: boolean
       target?: '_self' | '_top'
+      props?: Record<string, string | number | boolean>
     }
   ) => void
 }

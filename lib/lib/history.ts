@@ -5,6 +5,7 @@ export interface ViewDef {
   id: string
   url: string
   queryParams?: Record<string, string | number | boolean>
+  props?: Record<string, string | number | boolean>
 }
 
 export interface ViewState {
@@ -117,6 +118,7 @@ export function navigateHistory(
   options: {
     append: boolean,
     target?: '_self' | '_top'
+    props?: Record<string, string | number | boolean>
   }
 ) {
   const views = [...state.views]
@@ -135,7 +137,7 @@ export function navigateHistory(
   if (!options.append) {
     if (options.target === '_top') {
       // Takeover the whole app
-      const takeoverView = (existing) ? existing : { id, url, queryParams }
+      const takeoverView = (existing) ? existing : { id, url, queryParams, props: options.props }
       pushHistoryState(url, {
         id: takeoverView.id,
         views: [takeoverView]
@@ -155,7 +157,7 @@ export function navigateHistory(
 
   // Append last if forced to append
   if (options.append) {
-    views.push({ id, url, queryParams })
+    views.push({ id, url, queryParams, props: options.props })
     pushHistoryState(url, {
       id,
       views
@@ -169,7 +171,7 @@ export function navigateHistory(
   })
 
   const newViews = views.slice(0, currIndex + 1)
-  newViews.push({ id, url, queryParams })
+  newViews.push({ id, url, queryParams, props: options.props })
   pushHistoryState(url, {
     id,
     views: newViews

@@ -24,11 +24,9 @@ interface LinkProps {
  * If using HeroUI, prefer using HeroUI Link component. Utilise the hooks useHref()
  * and useNavigate() to provide HeroUIProvider the necessary components.
  *
- * CAVEAT:
- *
- * Props is not persisted in any way  and thus only used in first load of a view.
+ * CAVEAT: Props is not persisted in any way  and thus only used in first load of a view.
  * When using target _blank or CMD/CTRL to open a view in a new window props will
- * not be passed to the view. Might consider removing support for sending props...
+ * not be passed to the view.
  */
 export function Link({
   href: to,
@@ -36,7 +34,8 @@ export function Link({
   children,
   className,
   target = '_self',
-  onClick
+  onClick,
+  props
 }: PropsWithChildren & LinkProps) {
   const { navigate } = useRouter()
   const { url, queryParams } = relativeUrl(to, query)
@@ -64,7 +63,8 @@ export function Link({
     e.preventDefault()
     navigate(viewId, url, queryParams, {
       append: e.shiftKey,
-      target: target
+      target: target,
+      props: props
     })
   }
 

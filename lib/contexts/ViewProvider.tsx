@@ -9,13 +9,15 @@ export function ViewProvider({
   duration,
   children,
   params,
-  queryParams
+  queryParams,
+  props
 }: PropsWithChildren & {
   id: string
   width: number // Target view width as a percentage
   duration: number // Animation duration in ms
   params?: Record<string, string>
   queryParams?: Record<string, string | number | boolean>
+  props?: Record<string, string | number | boolean>
 }) {
   const { state } = useRouter()
   const [isActive, setIsActive] = useState(viewId === state.id)
@@ -32,6 +34,7 @@ export function ViewProvider({
       duration,
       params,
       queryParams,
+      props,
       setQueryParams: (partialQueryParams, replaceAll) => {
         const newQueryParams = (replaceAll !== true)
           ? { ...queryParams || {} } // Use existing query params as base

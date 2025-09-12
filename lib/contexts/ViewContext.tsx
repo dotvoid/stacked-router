@@ -7,6 +7,7 @@ export interface ViewContextType {
   duration: number
   params?: Record<string, string>
   queryParams?: Record<string, string | number | boolean>
+  props?: Record<string, string | number | boolean>
   setQueryParams: (queryParams: Record<string, string | number | boolean | undefined>, replaceAll?: boolean) => void
   queryParam: (key: string) => string | number | boolean | undefined
 }

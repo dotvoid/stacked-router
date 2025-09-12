@@ -11,6 +11,7 @@ export interface StackedView {
   Component?: React.ComponentType<unknown>
   Layout?: React.ComponentType<unknown>
   params?: Record<string, string>
+  props?: Record<string, string | number | boolean>
 }
 
 /**

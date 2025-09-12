@@ -4,6 +4,7 @@ import { getHistoryState } from '../lib/history'
 
 interface NavigateOptions {
   replace?: boolean
+  props?: Record<string, string | number | boolean>
 }
 
 /**
@@ -26,7 +27,8 @@ export function useNavigate() {
 
     navigate(state.id || '', url, queryParams, {
       append: false,
-      target: options?.replace ? '_top' : '_self'
+      target: options?.replace ? '_top' : '_self',
+      props: options?.props
     })
   }
 }
