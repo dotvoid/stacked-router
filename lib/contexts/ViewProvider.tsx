@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect, useState } from "react"
 import { ViewContext } from "./ViewContext"
 import { useRouter } from "../hooks/useRouter"
-import { updateQueryParams } from "../lib/history"
+import { updateProps, updateQueryParams } from "../lib/history"
 
 export function ViewProvider({
   id: viewId,
@@ -35,9 +35,31 @@ export function ViewProvider({
       params,
       queryParams,
       props,
+      setProps: (partialProps, replaceAll) => {
+        const newProps = (replaceAll !== true)
+          ? { ...props || {} } // Use existing props as base
+          : {} // Start with empty object to replace existing props
+
+        let update = false
+        for (const key in partialProps) {
+          const value = partialProps[key]
+
+          if (typeof value !== 'undefined') {
+            newProps[key] = value // Set new value
+            update = true
+          } else if (Object.prototype.hasOwnProperty.call(newProps, key)) {
+            delete newProps[key] // Delete existing value
+            update = true
+          }
+        }
+
+        if (update || replaceAll === true) {
+          updateProps(viewId, newProps)
+        }
+      },
       setQueryParams: (partialQueryParams, replaceAll) => {
         const newQueryParams = (replaceAll !== true)
-          ? { ...queryParams || {} } // Use existing query params as base
+          ? { ...props || {} } // Use existing query params as base
           : {} // Start with empty object to replace existing params
 
         let updateParams = false
@@ -58,7 +80,7 @@ export function ViewProvider({
         }
       },
       queryParam: (key) => {
-        return queryParams?.[key]
+        return props?.[key]
       }
     }}>
       {children}

@@ -110,6 +110,29 @@ export function updateQueryParams(
   }
 }
 
+export function updateProps(
+  id: string,
+  props: Record<string, string | number | boolean>
+) {
+  const { state } = getHistoryState()
+  const newState = { ...state }
+
+  let updateView = -1
+  for (let n = 0; n < newState.views.length; n++) {
+    if (newState.views[n].id === id) {
+      if (!paramsAreEqual(newState.views[n].props, props)) {
+        newState.views[n].props = props
+        updateView = n
+      }
+      break
+    }
+  }
+
+  if (updateView > -1) {
+    replaceHistoryState(window.location.href, newState)
+  }
+}
+
 export function navigateHistory(
   viewId: string | null,
   url: string,

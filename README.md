@@ -315,3 +315,47 @@ import { Link } from 'stacked-router'
   <Link to="/planning/234">Planning item nr 234</Link>
 </Button>
 ```
+
+## usNavigate()
+
+For more custom ways of navigating to another view, the hook `useNavigate()`, can be used. It allows sending _invisible_ props.
+
+```jsx
+import { useNavigate } from 'stacked-router'
+
+const navigate = useNavigate()
+
+<button onPress={() => {
+  navigate('/planning/234', {
+    options: {
+      fromEvent: '3433'
+    }
+  })
+}}>
+  Navigate to planning item nr 234
+</button>
+```
+
+## useView()
+
+Used to get query parameter, props or update query parameters or props.
+
+```jsx
+import { useView } from 'stacked-router'
+
+const { props, setProps, queryParams, setQueryParams } = useView()
+
+<button onPress={() => {
+  // Add one prop
+  setProps({ created: true})
+}}>
+  Is created
+</button>
+
+<button onPress={() => {
+  // Set all (clear all) query parameters
+  setQueryParams({}, true)
+}}>
+  Is created
+</button>
+```
