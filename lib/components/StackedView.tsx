@@ -21,8 +21,8 @@ export function StackedView({ children, style = {}, className }: PropsWithChildr
     }
 
     const el = ref.current
-    on(el, 'mousedown', onMouseDown)
-    return () => off(el, 'mousedown', onMouseDown)
+    on(el, 'click', onMouseDown)
+    return () => off(el, 'click', onMouseDown)
   }, [viewId, ref])
 
   return (
