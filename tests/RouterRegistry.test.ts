@@ -37,6 +37,10 @@ describe('RouterRegistry', () => {
       const userResult = registry.getViewComponentByPath('/user')
       expect(userResult).not.toBeNull()
       expect(userResult?.Component).toBe(UserComponent)
+
+      const userSlashResult = registry.getViewComponentByPath('/user/')
+      expect(userSlashResult).not.toBeNull()
+      expect(userSlashResult?.Component).toBe(UserComponent)
     })
 
     it('should register routes with layouts', () => {
@@ -383,24 +387,6 @@ describe('RouterRegistry', () => {
 
       const result = registry.getViewComponentByPath('/')
       expect(result?.Component).toBe(HomeComponent)
-    })
-
-    it('should handle paths with trailing slashes', () => {
-      const config = {
-        routes: [
-          {
-            path: '/user',
-            component: UserComponent,
-            meta: { breakpoints: [] }
-          }
-        ]
-      }
-
-      const registry = new RouterRegistry(config)
-
-      // Should not match paths with trailing slashes
-      const result = registry.getViewComponentByPath('/user/')
-      expect(result).toBeNull()
     })
 
     it('should handle special characters in dynamic parameters', () => {

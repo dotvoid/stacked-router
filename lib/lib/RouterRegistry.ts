@@ -62,7 +62,11 @@ export class RouterRegistry {
     })
   }
 
-  getViewComponentByPath(path: string) {
+  getViewComponentByPath(givenPath: string) {
+    const path = (givenPath.length > 1 && givenPath.at(-1) === '/')
+      ? givenPath.substring(0, givenPath.length - 1)
+      : givenPath
+
     for (const key in this.routes) {
       const route = this.routes[key]
       const match = path.match(route.pattern)
