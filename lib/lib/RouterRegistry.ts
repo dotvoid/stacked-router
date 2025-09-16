@@ -12,13 +12,18 @@ export interface ViewMetadata {
 export interface RouteConfig {
   path: string
   component: React.ComponentType<unknown>
-  layout?: React.ComponentType<unknown>
+  layouts?: React.ComponentType<React.PropsWithChildren>[]
   meta?: ViewMetadata
 }
 
 export interface RouterConfig {
   routes: RouteConfig[]
-  layouts?: Record<string, React.ComponentType<unknown>>
+  layouts?: Record<string, React.ComponentType<React.PropsWithChildren>>
+}
+
+export interface ParsedRouteLayout {
+  key?: string
+  component: React.ComponentType<React.PropsWithChildren>
 }
 
 interface ParsedRoute {
@@ -26,13 +31,13 @@ interface ParsedRoute {
   pattern: RegExp
   paramKeys: string[]
   originalPath: string
-  layout?: React.ComponentType<unknown>
+  layouts: ParsedRouteLayout[]
   meta: ViewMetadata
 }
 
 export class RouterRegistry {
   private routes: Record<string, ParsedRoute> = {}
-  private layouts: Record<string, React.ComponentType<unknown>> = {}
+  private layouts: Record<string, React.ComponentType<React.PropsWithChildren>> = {}
 
   constructor(config: RouterConfig) {
     this.layouts = config.layouts || {}
@@ -56,7 +61,9 @@ export class RouterRegistry {
         pattern: patternRegex,
         paramKeys,
         originalPath: route.path,
-        layout: route.layout || this.findClosestLayout(route.path),
+        layouts: (route.layouts?.length)
+          ? route.layouts.map((l) => { return {component: l} }) // Component specified routes
+          : this.constructLayoutList(route.path), // Path found routes
         meta: route.meta || { breakpoints: [] }
       }
     })
@@ -70,38 +77,57 @@ export class RouterRegistry {
     for (const key in this.routes) {
       const route = this.routes[key]
       const match = path.match(route.pattern)
+
       if (match) {
         const params = Object.fromEntries(
           route.paramKeys.map((key, i) => [key, match[i + 1]])
         )
+
         return {
           Component: route.component,
-          Layout: route.layout,
+          Layouts: route.layouts,
           params,
           meta: route.meta
         }
       }
     }
+
     return null
   }
 
   getAllViewComponents() {
     return Object.values(this.routes).map(route => ({
       Component: route.component,
-      Layout: route.layout,
+      Layouts: route.layouts,
       meta: route.meta
     }))
   }
 
-  private findClosestLayout(path: string): React.ComponentType<unknown> | undefined {
-    const segments = path.split('/')
-    while (segments.length > 0) {
-      const layoutPath = segments.join('/') || '/'
-      if (this.layouts[layoutPath]) {
-        return this.layouts[layoutPath]
+  private constructLayoutList(routePath: string): ParsedRouteLayout[] {
+    const layouts: ParsedRouteLayout[] = []
+
+    // Segment the view path (e.g ['/', 'user', 'profile'])
+    const segments = ['/', ...routePath.match(/[^/]+/g) || []]
+
+    let path = segments[0]
+    for (let n = 0; n < segments.length; n++) {
+      const segmentLayouts = []
+
+      for (const layoutId in this.layouts) {
+        const [layoutPath, key] = layoutId.split('#')
+
+        if (layoutPath === path) {
+          segmentLayouts.push({
+            key,
+            component: this.layouts[layoutId]
+          })
+        }
       }
-      segments.pop()
+
+      layouts.push(...segmentLayouts)
+      path += segments[n + 1]
     }
-    return undefined
+
+    return layouts
   }
 }

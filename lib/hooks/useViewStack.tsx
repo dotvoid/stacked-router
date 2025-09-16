@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react'
 import { useRouter } from './useRouter'
 import { getTransitionState, ViewDef, ViewTransiationMode } from '../lib/history'
 import { usePrevious } from './usePrevious'
-import type { ViewMetadata } from '../lib/RouterRegistry'
+import type { ParsedRouteLayout, ViewMetadata } from '../lib/RouterRegistry'
 
 export interface StackedView {
   mode: ViewTransiationMode
   view: ViewDef
   meta: ViewMetadata | undefined
   Component?: React.ComponentType<unknown>
-  Layout?: React.ComponentType<unknown>
+  Layouts?: ParsedRouteLayout[]
   params?: Record<string, string>
   props?: Record<string, string | number | boolean>
 }
@@ -31,14 +31,14 @@ export function useViewStack(): StackedView[] {
 
     const transition = getTransitionState(state.views, prevViews).map(({ mode, view }) => {
       const url = new URL(view.url, 'http://dummy.base') // Dummy ensure relative paths work
-      const { Component, meta, Layout, params } = clientRouter?.getViewComponentByPath(url.pathname) || {}
+      const { Component, meta, Layouts, params } = clientRouter?.getViewComponentByPath(url.pathname) || {}
 
       return {
         mode,
         view,
         meta,
         Component,
-        Layout,
+        Layouts,
         params
       }
     })

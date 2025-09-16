@@ -4,6 +4,7 @@ import { ViewProvider } from '../contexts/ViewProvider'
 import { calculateAllocations } from '../lib/allocation'
 import { StackedView } from '../hooks/useViewStack'
 import { DefaultLayout } from './DefaultLayout'
+import type { ParsedRouteLayout } from '../lib/RouterRegistry'
 
 export function StackedViewGroup({ duration = 0, className, style = {} }: {
   duration?: number
@@ -15,7 +16,6 @@ export function StackedViewGroup({ duration = 0, className, style = {} }: {
   )
 }
 
-
 function ViewStackContainer({ duration = 0, className, style = {} }: {
   duration?: number
   className?: string
@@ -25,15 +25,12 @@ function ViewStackContainer({ duration = 0, className, style = {} }: {
   const [openViews, setOpenViews] = useState<StackedView[]>(viewStack)
   const [width, setWidth] = useState(window.innerWidth)
 
-
   useEffect(() => {
     // FIXME: Should be at least a tiny bit debounced
     const onResize = () => setWidth(window.innerWidth)
     window.addEventListener('resize', onResize)
-
     return () => window.removeEventListener('resize', onResize)
   }, [])
-
 
   useEffect(() => {
     // Timeout (275ms) that matches animations from css - 25ms to accomodate
@@ -53,13 +50,11 @@ function ViewStackContainer({ duration = 0, className, style = {} }: {
     return () => clearTimeout(timeoutId)
   }, [viewStack, width, duration])
 
-
   // Calculate allocations for start and end of transitions
   const allocs = useMemo(() => {
     // const start = calculateAllocations2(width, viewStack, 'start')
     return calculateAllocations(width, openViews, 'end')
   }, [width, openViews])
-
 
   // Calculate which views actually fit as to how much each view
   // requires of the available total 100% width.
@@ -78,7 +73,6 @@ function ViewStackContainer({ duration = 0, className, style = {} }: {
     return openViews.slice(startIdx)
   }, [allocs, openViews])
 
-
   // Extract actual view widths for all visible/rendered views
   const viewWidths = useMemo(() => {
     const viewWidths: number[] = []
@@ -88,7 +82,6 @@ function ViewStackContainer({ duration = 0, className, style = {} }: {
 
     return viewWidths
   }, [allocs, openViews, views])
-
 
   return (
     <RenderedViews
@@ -101,7 +94,6 @@ function ViewStackContainer({ duration = 0, className, style = {} }: {
   )
 }
 
-
 function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
   views: StackedView[]
   widths: number[]
@@ -111,8 +103,10 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
 }) {
   return (
     <div className={className} style={style}>
-      {views.map(({ view, params, Layout, Component }, i) => {
-        const LayoutWrapper = (Layout) ? Layout : DefaultLayout
+      {views.map(({ view, params, Layouts, Component }, i) => {
+        const LayoutWrappers = (Layouts?.length)
+          ? Layouts
+          : [{ component: DefaultLayout}] as ParsedRouteLayout[]
 
         return (
           <ViewProvider
@@ -124,12 +118,31 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
             queryParams={view.queryParams}
             props={view.props}
           >
-            <LayoutWrapper>
-              {!!Component && <Component {...params || {}} />}
-            </LayoutWrapper>
+            {renderNestedLayouts(LayoutWrappers, Component, params)}
           </ViewProvider>
         )
       })}
     </div>
+  )
+}
+
+// Helper function to recursively render nested layouts
+function renderNestedLayouts(
+  layouts: Array<{ key?: string; component: React.ComponentType<React.PropsWithChildren> }>,
+  Component: React.ComponentType<unknown> | undefined,
+  params?: Record<string, unknown>
+): React.ReactNode {
+  if (layouts.length === 0) {
+    // Base case: no more layouts, render the component
+    return Component ? <Component {...(params || {})} /> : null
+  }
+
+  const [currentLayout, ...remainingLayouts] = layouts
+  const CurrentLayout = currentLayout.component
+
+  return (
+    <CurrentLayout key={currentLayout.key}>
+      {renderNestedLayouts(remainingLayouts, Component, params)}
+    </CurrentLayout>
   )
 }

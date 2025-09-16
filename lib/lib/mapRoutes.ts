@@ -27,10 +27,23 @@ export function mapRoutes(
       pathPattern = '/' + pathPattern
     }
 
-    if (pathPattern.endsWith('/_layout')) {
-      const layoutPath = pathPattern.replace(/\/_layout$/, '') || '/'
-      layouts[layoutPath] = (module as PageComponent).default
+    // Check if this is a layout file
+    const layoutMatch = pathPattern.match(/^(.*)\/(_layout(?:\.([^/]+))?)$/)
+    if (layoutMatch) {
+      // We don't use the second desctructed value, hence empty slot
+      const [, parentPath, , layoutId] = layoutMatch
+      const layoutPath = parentPath || '/'
+
+      if (layoutId) {
+        // Named layout: _layout.{id}.tsx -> store as "{path}#key"
+        const layoutKey = `${layoutPath}#${layoutId}`
+        layouts[layoutKey] = (module as PageComponent).default
+      } else {
+        // Default layout: _layout.tsx -> store as "{path}"
+        layouts[layoutPath] = (module as PageComponent).default
+      }
     } else if (!pathPattern.includes('/_')) {
+      // Regular route (not a layout or any other special file starting with _)
       routes.push({
         path: pathPattern,
         component: (module as PageComponent).default,

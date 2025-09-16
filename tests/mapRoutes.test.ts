@@ -55,6 +55,7 @@ describe('mapRoutes', () => {
     const modules = {
       'pages/_layout.tsx': createMockModule(MockLayout),
       'pages/admin/_layout.tsx': createMockModule(MockLayout),
+      'pages/admin/_layout.dialog.tsx': createMockModule(MockLayout),
       'pages/Home.tsx': createMockModule(MockComponent),
     }
 
@@ -65,7 +66,8 @@ describe('mapRoutes', () => {
     expect(result.routes[0].path).toBe('/home')
     expect(result.layouts).toEqual({
       '/': MockLayout,
-      '/admin': MockLayout
+      '/admin': MockLayout,
+      '/admin#dialog': MockLayout
     })
   })
 

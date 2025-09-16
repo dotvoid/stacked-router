@@ -7,6 +7,8 @@ const HomeComponent: React.ComponentType<unknown> = () => null
 const UserComponent: React.ComponentType<unknown> = () => null
 const UserProfileComponent: React.ComponentType<unknown> = () => null
 const DefaultLayout: React.ComponentType<unknown> = () => null
+const DialogLayout: React.ComponentType<unknown> = () => null
+const UserDialogLayout: React.ComponentType<unknown> = () => null
 const AdminLayout: React.ComponentType<unknown> = () => null
 
 describe('RouterRegistry', () => {
@@ -20,7 +22,7 @@ describe('RouterRegistry', () => {
             meta: { breakpoints: [] }
           },
           {
-            path: '/user',
+            path: '/users',
             component: UserComponent,
             meta: { breakpoints: [] }
           }
@@ -34,34 +36,89 @@ describe('RouterRegistry', () => {
       expect(homeResult?.Component).toBe(HomeComponent)
       expect(homeResult?.meta).toEqual({ breakpoints: [] })
 
-      const userResult = registry.getViewComponentByPath('/user')
+      const userResult = registry.getViewComponentByPath('/users')
       expect(userResult).not.toBeNull()
       expect(userResult?.Component).toBe(UserComponent)
 
-      const userSlashResult = registry.getViewComponentByPath('/user/')
+      const userSlashResult = registry.getViewComponentByPath('/users/')
       expect(userSlashResult).not.toBeNull()
       expect(userSlashResult?.Component).toBe(UserComponent)
     })
 
-    it('should register routes with layouts', () => {
+    it('should register routes with route specified layouts', () => {
       const config = {
         routes: [
           {
             path: '/',
             component: HomeComponent,
-            layout: DefaultLayout,
+            layouts: [DefaultLayout],
             meta: { breakpoints: [] }
           }
-        ],
-        layouts: {
-          '/': DefaultLayout
-        }
+        ]
       }
 
       const registry = new RouterRegistry(config)
 
       const result = registry.getViewComponentByPath('/')
-      expect(result?.Layout).toBe(DefaultLayout)
+      expect(result?.Layouts).toStrictEqual([
+        {
+          component: DefaultLayout
+        }
+      ])
+    })
+
+    it('should register routes with path specified layouts', () => {
+      const config = {
+        routes: [
+          {
+            path: '/',
+            component: HomeComponent,
+            meta: { breakpoints: [] }
+          },
+          {
+            path: '/users',
+            component: UserComponent,
+            meta: { breakpoints: [] }
+          }
+        ],
+        layouts: {
+          '/': DefaultLayout,
+          '/#dialog': DialogLayout,
+          '/users#dialog': UserDialogLayout
+        }
+      }
+
+      const registry = new RouterRegistry(config)
+
+      const result1 = registry.getViewComponentByPath('/')
+      expect(result1?.Layouts).toHaveLength(2)
+      expect(result1?.Layouts).toStrictEqual([
+        {
+          key: undefined,
+          component: DefaultLayout
+        },
+        {
+          key: 'dialog',
+          component: DialogLayout
+        }
+      ])
+
+      const result2 = registry.getViewComponentByPath('/users')
+      expect(result2?.Layouts).toHaveLength(3)
+      expect(result2?.Layouts).toStrictEqual([
+        {
+          key: undefined,
+          component: DefaultLayout
+        },
+        {
+          key: 'dialog',
+          component: DialogLayout
+        },
+        {
+          key: 'dialog',
+          component: UserDialogLayout
+        }
+      ])
     })
 
     it('should handle routes with dynamic parameters', () => {
@@ -192,28 +249,16 @@ describe('RouterRegistry', () => {
       const registry = new RouterRegistry(config)
 
       const result = registry.getViewComponentByPath('/admin/users/profile')
-      expect(result?.Layout).toBe(AdminLayout)
-    })
-
-    it('should fallback to parent layout when specific layout not found', () => {
-      const config = {
-        routes: [
-          {
-            path: '/admin/deep/nested/route',
-            component: UserComponent,
-            meta: { breakpoints: [] }
-          }
-        ],
-        layouts: {
-          '/': DefaultLayout,
-          '/admin': AdminLayout
+      expect(result?.Layouts).toStrictEqual([
+        {
+          key: undefined,
+          component: DefaultLayout
+        },
+        {
+        key: undefined,
+          component: AdminLayout
         }
-      }
-
-      const registry = new RouterRegistry(config)
-
-      const result = registry.getViewComponentByPath('/admin/deep/nested/route')
-      expect(result?.Layout).toBe(AdminLayout)
+      ])
     })
 
     it('should use root layout when no specific layout found', () => {
@@ -233,7 +278,10 @@ describe('RouterRegistry', () => {
       const registry = new RouterRegistry(config)
 
       const result = registry.getViewComponentByPath('/random/path')
-      expect(result?.Layout).toBe(DefaultLayout)
+      expect(result?.Layouts).toStrictEqual([{
+        key: undefined,
+        component: DefaultLayout
+      }])
     })
 
     it('should have no layout when none are defined', () => {
@@ -250,28 +298,7 @@ describe('RouterRegistry', () => {
       const registry = new RouterRegistry(config)
 
       const result = registry.getViewComponentByPath('/user')
-      expect(result?.Layout).toBeUndefined()
-    })
-
-    it('should prefer explicit layout over closest layout', () => {
-      const config = {
-        routes: [
-          {
-            path: '/admin/users',
-            component: UserComponent,
-            layout: DefaultLayout,
-            meta: { breakpoints: [] }
-          }
-        ],
-        layouts: {
-          '/admin': AdminLayout
-        }
-      }
-
-      const registry = new RouterRegistry(config)
-
-      const result = registry.getViewComponentByPath('/admin/users')
-      expect(result?.Layout).toBe(DefaultLayout)
+      expect(result?.Layouts).toHaveLength(0)
     })
   })
 
@@ -282,7 +309,7 @@ describe('RouterRegistry', () => {
           {
             path: '/',
             component: HomeComponent,
-            layout: DefaultLayout,
+            layouts: [DefaultLayout],
             meta: { breakpoints: [] }
           },
           {
@@ -300,13 +327,15 @@ describe('RouterRegistry', () => {
 
       expect(allComponents[0]).toMatchObject({
         Component: HomeComponent,
-        Layout: DefaultLayout,
+        Layouts: [{
+          component: DefaultLayout
+        }],
         meta: { breakpoints: [] }
       })
 
       expect(allComponents[1]).toMatchObject({
         Component: UserProfileComponent,
-        Layout: undefined,
+        Layouts: [],
         meta: { breakpoints: [{ breakpoint: 768, minVw: 50 }] }
       })
     })

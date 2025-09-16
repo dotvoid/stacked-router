@@ -1,6 +1,6 @@
-import type { PropsWithChildren } from 'react'
-
-export function DefaultLayout({ children }: PropsWithChildren) {
+export function DefaultLayout({ children }: {
+  children: React.ReactNode
+}) {
   return (
     <>
       {children}
