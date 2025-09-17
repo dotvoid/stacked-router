@@ -4,8 +4,9 @@ A client side only, file based, router with path mapping to _"view component_ pr
 
 The router maintains the browser history and navigation and include utilities to integrate with modern UI libraries navigation. The browser location always matches the focused view which allows links to individual views to be copied and shared.
 
-## Basic idea
+## Basic concepts
 
+### Stacked views
 Allow placing multiple views side by side on large screens but still degrade gracefully on smaller screens (mobile). Mobile friendly should also be large desktop screen friendly.
 
 Smaller screens/viewports stacks views on top of each other, hiding views that don't receive as much space as they want..
@@ -33,6 +34,21 @@ Based on the minimum screen estate each view require, a larger screen/viewport c
 ..|        | |        | |        |
   ---------- ---------- ----------
 ```
+
+### Void views
+
+Void views are rendered outside the stack. These views do not take up any space in the stack. This is useful for displaying a view in a modal, sheet or popup.
+
+### Layouts
+
+Layouts are used to define the layout of the views in the stack. Layouts can be nested to create more complex layouts. This means that a layout further down the tree is rendered inside a layout further up in the tree.
+
+Default layouts are named `_layout.tsx`.
+
+It is also possible to define named, or keyed, layouts. When navigating to a view, the layouts with the matching name will be used. If no layout with the matching name is found, any default layouts will be used.
+
+Named layouts are named `_layout.name.tsx`.
+
 ## Usage and concepts
 
 **main.tsx**
@@ -62,7 +78,11 @@ import { StackedViewGroup } from 'stacked-router'
 export function App() {
    return (
     <div ref={grid} className='w-screen h-screen relative'>
+      {/* Stacked views rendered here */}
       <StackedViewGroup duration={0} className={`flex content-stretch h-screen overflow-hidden`} />
+
+      {/* Standalone views rendered here */}
+      <VoidViews />
     </div>
   )
 }
@@ -152,6 +172,7 @@ views/
         [id].tsx
         index.tsx
     _layout.tsx
+    _layout.dialog.tsx
     index.tsx
 ```
 
@@ -316,9 +337,11 @@ import { Link } from 'stacked-router'
 </Button>
 ```
 
-## usNavigate()
+## Custom navigation
 
-For more custom ways of navigating to another view, the hook `useNavigate()`, can be used. It allows sending _invisible_ props.
+For more custom ways of navigating to another view, the hook `useNavigate()`, can be used. It allows sending _invisible_ props (params not visible in URL), specifying a specific layout or that the view should be rendered as a void view (outside of the stack).
+
+The same can be achieved by using the `<Link />` component included in the `stacked-router` package.
 
 ```jsx
 import { useNavigate } from 'stacked-router'
@@ -334,16 +357,35 @@ const navigate = useNavigate()
 }}>
   Navigate to planning item nr 234
 </button>
+
+<button onPress={() => {
+  navigate('/planning/' + crypto.randomUUID(), {
+    options: {
+      fromEvent: '3433',
+      layout: 'dialog',
+      target: '_void'
+    }
+  })
+}}>
+  Create new planning item
+</button>
 ```
 
 ## useView()
 
-Used to get query parameter, props or update query parameters or props.
+Used to get query parameter, props or update query parameters or props or if a named layout is used.
 
 ```jsx
 import { useView } from 'stacked-router'
 
-const { props, setProps, queryParams, setQueryParams } = useView()
+const { props, setProps, queryParams, setQueryParams, layout } = useView()
+
+<p>
+{layout
+  ? layout
+  : 'No layout or default layout'
+}
+</p>
 
 <button onPress={() => {
   // Add one prop

@@ -21,7 +21,7 @@ function ViewStackContainer({ duration = 0, className, style = {} }: {
   className?: string
   style?: CSSProperties
 }) {
-  const viewStack = useViewStack()
+  const { viewStack } = useViewStack()
   const [openViews, setOpenViews] = useState<StackedView[]>(viewStack)
   const [width, setWidth] = useState(window.innerWidth)
 
@@ -105,8 +105,8 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
     <div className={className} style={style}>
       {views.map(({ view, params, Layouts, Component }, i) => {
         const LayoutWrappers = (Layouts?.length)
-          ? Layouts
-          : [{ component: DefaultLayout}] as ParsedRouteLayout[]
+          ? Layouts.filter(layout => layout.key === view.layout)
+          : [{ component: DefaultLayout }] as ParsedRouteLayout[]
 
         return (
           <ViewProvider

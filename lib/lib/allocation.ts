@@ -20,6 +20,7 @@ export interface ViewAllocation {
 
 /**
  * Calculates viewport width percentage allocation for each view based on current screen width.
+ * Ignores views that are not relevant to the current transition. (Like void targets).
  *
  * At the start of a transition appearing views should be allocated 0 width.
  * At the end of a transition disappearing views should be allocated 0 width.
@@ -33,7 +34,7 @@ export function calculateAllocations(screenWidthPx: number, viewStack: StackedVi
   const ignoredMode = transition === 'start' ? 'appear' : 'disappear'
 
   const views = viewStack
-    .filter((sv) => sv.mode !== ignoredMode)
+    .filter((sv) => sv.mode !== ignoredMode || sv.view.target !== '_void')
     .map(v => {
       return {
         id: v.view.id,

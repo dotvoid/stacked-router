@@ -5,12 +5,14 @@ export interface ViewContextType {
   isActive: boolean
   width: number
   duration: number
+  layout?: string
   params?: Record<string, string>
   queryParams?: Record<string, string | number | boolean>
   setQueryParams: (queryParams: Record<string, string | number | boolean | undefined>, replaceAll?: boolean) => void
   queryParam: (key: string) => string | number | boolean | undefined
   props?: Record<string, string | number | boolean>
   setProps: (queryParams: Record<string, string | number | boolean | undefined>, replaceAll?: boolean) => void
+  close: () => void
 }
 
 export const ViewContext = createContext<ViewContextType>({
@@ -21,5 +23,6 @@ export const ViewContext = createContext<ViewContextType>({
   queryParams: {},
   setQueryParams: () => { },
   setProps: () => { },
-  queryParam: () => { return undefined }
+  queryParam: () => { return undefined },
+  close: () => { }
 })

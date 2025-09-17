@@ -18,10 +18,13 @@ export interface StackedView {
  * Expose navigate function and current view stack and
  * what triggered the stack change or load.
  */
-export function useViewStack(): StackedView[] {
+export function useViewStack(): {
+  viewStack: StackedView[],
+  voidViews: StackedView[]
+} {
   const { state, clientRouter } = useRouter() || {}
   const [transitionState, setTransitionsState] = useState<StackedView[]>([])
-
+  const [voidState, setVoidState] = useState<StackedView[]>([])
   const prevViews = usePrevious(state.views)
 
   useEffect(() => {
@@ -29,7 +32,28 @@ export function useViewStack(): StackedView[] {
       return
     }
 
-    const transition = getTransitionState(state.views, prevViews).map(({ mode, view }) => {
+    const previousViews = prevViews?.filter(v => v.target !== '_void')
+    const stateViews: ViewDef[] = []
+    const voidViews: StackedView[] = []
+
+    state.views.forEach((view) => {
+      if (view.target !== '_void') {
+        stateViews.push(view)
+      } else {
+        const url = new URL(view.url, 'http://dummy.base') // Dummy ensure relative paths work
+        const { Component, meta, Layouts, params } = clientRouter?.getViewComponentByPath(url.pathname) || {}
+        voidViews.push({
+          mode: 'both',
+          view,
+          meta,
+          Component,
+          Layouts,
+          params
+        })
+      }
+    })
+
+    const transitionViews = getTransitionState(stateViews, previousViews).map(({ mode, view }) => {
       const url = new URL(view.url, 'http://dummy.base') // Dummy ensure relative paths work
       const { Component, meta, Layouts, params } = clientRouter?.getViewComponentByPath(url.pathname) || {}
 
@@ -43,11 +67,15 @@ export function useViewStack(): StackedView[] {
       }
     })
 
-    setTransitionsState(transition)
+    setVoidState(voidViews)
+    setTransitionsState(transitionViews)
 
     // We specifically only want the cleanState change to trigger us
     // eslint-disable-next-line
   }, [state.views])
 
-  return transitionState
+  return {
+    viewStack: transitionState,
+    voidViews: voidState
+  }
 }

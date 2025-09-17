@@ -24,10 +24,12 @@ export interface RouterState {
     queryParams: Record<string, string | number | boolean>,
     options: {
       append: boolean
-      target?: '_self' | '_top'
+      target?: '_self' | '_top' | '_blank' | '_void'
       props?: Record<string, string | number | boolean>
+      layout?: string
     }
-  ) => void
+  ) => void,
+  close: (viewId: string) => void
 }
 
 export const RouterContext = createContext<RouterState>({
@@ -36,5 +38,6 @@ export const RouterContext = createContext<RouterState>({
     id: '',
     views: []
   },
-  navigate: () => { }
+  navigate: () => { },
+  close: () => { }
 })

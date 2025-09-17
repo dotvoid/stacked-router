@@ -1,6 +1,7 @@
 // Export components
 export { RouterProvider } from './contexts/RouterProvider'
 export { StackedViewGroup } from './components/StackedViewGroup'
+export { VoidViews } from './components/VoidViews'
 export { StackedView } from './components/StackedView'
 export { Link } from './components/Link'
 

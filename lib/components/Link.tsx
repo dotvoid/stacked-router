@@ -7,8 +7,9 @@ interface LinkProps {
   href?: string
   query?: Record<string, string | number | boolean>
   props?: Record<string, string | number | boolean>
+  layout?: string
   className?: string
-  target?: '_self' | '_top' | '_blank'
+  target?: '_self' | '_top' | '_blank' | '_void'
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void
 }
 
@@ -35,7 +36,8 @@ export function Link({
   className,
   target = '_self',
   onClick,
-  props
+  props,
+  layout
 }: PropsWithChildren & LinkProps) {
   const { navigate } = useRouter()
   const { url, queryParams } = relativeUrl(to, query)
@@ -64,7 +66,8 @@ export function Link({
     navigate(viewId, url, queryParams, {
       append: e.shiftKey,
       target: target,
-      props: props
+      props: props,
+      layout: layout
     })
   }
 

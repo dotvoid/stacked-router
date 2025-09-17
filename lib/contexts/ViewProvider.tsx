@@ -7,6 +7,7 @@ export function ViewProvider({
   id: viewId,
   width,
   duration,
+  layout,
   children,
   params,
   queryParams,
@@ -15,11 +16,12 @@ export function ViewProvider({
   id: string
   width: number // Target view width as a percentage
   duration: number // Animation duration in ms
+  layout?: string // Used layout key
   params?: Record<string, string>
   queryParams?: Record<string, string | number | boolean>
   props?: Record<string, string | number | boolean>
 }) {
-  const { state } = useRouter()
+  const { state, close } = useRouter()
   const [isActive, setIsActive] = useState(viewId === state.id)
 
   useEffect(() => {
@@ -35,6 +37,7 @@ export function ViewProvider({
       params,
       queryParams,
       props,
+      layout,
       setProps: (partialProps, replaceAll) => {
         const newProps = (replaceAll !== true)
           ? { ...props || {} } // Use existing props as base
@@ -81,6 +84,9 @@ export function ViewProvider({
       },
       queryParam: (key) => {
         return props?.[key]
+      },
+      close: () => {
+        close(viewId)
       }
     }}>
       {children}

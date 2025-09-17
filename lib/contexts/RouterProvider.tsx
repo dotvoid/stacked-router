@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect, useMemo, useState } from "react"
 import { RouterContext, RouterState, Trigger } from "./RouterContext"
 import { off, on } from '../lib/events'
-import { getHistoryState, navigateHistory } from "../lib/history"
+import { closeView, getHistoryState, navigateHistory } from "../lib/history"
 import { RouterRegistry, RouterConfig } from "../lib/RouterRegistry"
 
 export function RouterProvider({ config, children }: PropsWithChildren & {
@@ -56,6 +56,9 @@ function buildState(trigger: Trigger): RouterState {
     search,
     navigate: (viewId, url, queryParams, options) => {
       navigateHistory(viewId, url, queryParams, state, options)
+    },
+    close: (viewId) => {
+      closeView(viewId, state)
     }
   }
 }

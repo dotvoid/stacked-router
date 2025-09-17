@@ -6,6 +6,8 @@ export interface ViewDef {
   url: string
   queryParams?: Record<string, string | number | boolean>
   props?: Record<string, string | number | boolean>
+  layout?: string
+  target?: '_self' | '_top' | '_blank' | '_void'
 }
 
 export interface ViewState {
@@ -133,6 +135,16 @@ export function updateProps(
   }
 }
 
+export function closeView(
+  viewId: string | null,
+  state: ViewState
+) {
+  const views = [...state.views].filter((view) => view.id !== viewId)
+
+  const newState = { ...state, views }
+  replaceHistoryState(views.at(-1)?.url ?? '', newState)
+}
+
 export function navigateHistory(
   viewId: string | null,
   url: string,
@@ -140,8 +152,9 @@ export function navigateHistory(
   state: ViewState,
   options: {
     append: boolean,
-    target?: '_self' | '_top'
+    target?: '_self' | '_top' | '_blank' | '_void'
     props?: Record<string, string | number | boolean>
+    layout?: string
   }
 ) {
   const views = [...state.views]
@@ -160,7 +173,16 @@ export function navigateHistory(
   if (!options.append) {
     if (options.target === '_top') {
       // Takeover the whole app
-      const takeoverView = (existing) ? existing : { id, url, queryParams, props: options.props }
+      const takeoverView = (existing)
+        ? existing
+        : {
+          id,
+          url,
+          queryParams,
+          props: options.props,
+          target: options?.target,
+          layout: options?.layout
+        }
       pushHistoryState(url, {
         id: takeoverView.id,
         views: [takeoverView]
@@ -178,9 +200,16 @@ export function navigateHistory(
     }
   }
 
-  // Append last if forced to append
-  if (options.append) {
-    views.push({ id, url, queryParams, props: options.props })
+  // Append last if forced to append or if opening into a void outlet
+  if (options.append || options.target === '_void') {
+    views.push({
+      id,
+      url,
+      queryParams,
+      props: options.props,
+      target: options?.target,
+      layout: options?.layout
+    })
     pushHistoryState(url, {
       id,
       views
@@ -194,7 +223,15 @@ export function navigateHistory(
   })
 
   const newViews = views.slice(0, currIndex + 1)
-  newViews.push({ id, url, queryParams, props: options.props })
+  newViews.push({
+    id,
+    url,
+    queryParams,
+    props: options.props,
+    target: options?.target,
+    layout: options?.layout
+  })
+
   pushHistoryState(url, {
     id,
     views: newViews

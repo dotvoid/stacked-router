@@ -3,8 +3,9 @@ import { relativeUrl } from '../lib/href'
 import { getHistoryState } from '../lib/history'
 
 interface NavigateOptions {
-  replace?: boolean
+  target?: '_self' | '_top' | '_blank' | '_void'
   props?: Record<string, string | number | boolean>
+  layout?: string
 }
 
 /**
@@ -27,8 +28,9 @@ export function useNavigate() {
 
     navigate(state.id || '', url, queryParams, {
       append: false,
-      target: options?.replace ? '_top' : '_self',
-      props: options?.props
+      target: options?.target || '_self',
+      props: options?.props,
+      layout: options?.layout
     })
   }
 }
