@@ -5,6 +5,7 @@ import { calculateAllocations } from '../lib/allocation'
 import { StackedView } from '../hooks/useViewStack'
 import { DefaultLayout } from './DefaultLayout'
 import type { ParsedRouteLayout } from '../lib/RouterRegistry'
+import { SlotProvider } from '../contexts/SlotProvider'
 
 export function StackedViewGroup({ duration = 0, className, style = {} }: {
   duration?: number
@@ -102,27 +103,29 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
   style?: CSSProperties
 }) {
   return (
-    <div className={className} style={style}>
-      {views.map(({ view, params, Layouts, Component }, i) => {
-        const LayoutWrappers = (Layouts?.length)
-          ? Layouts.filter(layout => layout.key === view.layout)
-          : [{ component: DefaultLayout }] as ParsedRouteLayout[]
+    <SlotProvider>
+      <div className={className} style={style}>
+        {views.map(({ view, params, Layouts, Component }, i) => {
+          const LayoutWrappers = (Layouts?.length)
+            ? Layouts.filter(layout => layout.key === view.layout)
+            : [{ component: DefaultLayout }] as ParsedRouteLayout[]
 
-        return (
-          <ViewProvider
-            key={view.id}
-            id={view.id}
-            width={widths[i]}
-            duration={duration}
-            params={params}
-            queryParams={view.queryParams}
-            props={view.props}
-          >
-            {renderNestedLayouts(LayoutWrappers, Component, params)}
-          </ViewProvider>
-        )
-      })}
-    </div>
+          return (
+            <ViewProvider
+              key={view.id}
+              id={view.id}
+              width={widths[i]}
+              duration={duration}
+              params={params}
+              queryParams={view.queryParams}
+              props={view.props}
+            >
+              {renderNestedLayouts(LayoutWrappers, Component, params)}
+            </ViewProvider>
+          )
+        })}
+      </div>
+    </SlotProvider>
   )
 }
 
