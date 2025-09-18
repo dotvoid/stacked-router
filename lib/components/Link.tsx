@@ -30,7 +30,7 @@ interface LinkProps {
  * not be passed to the view.
  */
 export function Link({
-  href: to,
+  href,
   query = {},
   children,
   className,
@@ -40,7 +40,7 @@ export function Link({
   layout
 }: PropsWithChildren & LinkProps) {
   const { navigate } = useRouter()
-  const { url, queryParams } = relativeUrl(to, query)
+  const { url, queryParams } = relativeUrl(href, query)
   const { viewId } = useView()
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {

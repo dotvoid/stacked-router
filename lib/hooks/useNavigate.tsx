@@ -9,7 +9,7 @@ interface NavigateOptions {
 }
 
 /**
- * Hook to provide a navigate function that can be used to integrate with HeroUI.
+ * Hook to provide a navigate function that can be used to integrate with UI libraries.
  *
  * @example
  * import { useHref, useNavigate } from '@/router/hooks'

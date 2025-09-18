@@ -1,7 +1,7 @@
 import { relativeUrl } from '../lib/href'
 
 /**
- * Hook to provide a useHref function that can be used to with UI libraries.
+ * Hook to provide a useHref function that can be used with UI libraries.
  * Converts router hrefs to native HTML hrefs.
  *
  * @example

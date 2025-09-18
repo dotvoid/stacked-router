@@ -8,16 +8,22 @@ export function RouterProvider({ basePath, config, children }: PropsWithChildren
   basePath?: string
   config: RouterConfig
 }) {
-  const [state, setState] = useState(buildState('load'))
-
   const clientRouter = useMemo(() => {
     return new RouterRegistry(config, basePath)
   }, [config, basePath])
 
+  const [state, setState] = useState(buildState('load', clientRouter))
+
   useEffect(() => {
-    const onPopState = () => setState(buildState('popstate'))
-    const onPushState = () => setState(buildState('pushstate'))
-    const onReplaceState = () => setState(buildState('replacestate'))
+    if (basePath && basePath !== '/' && window.location.pathname === '/') {
+      window.history.replaceState(null, '', basePath)
+    }
+  }, [basePath])
+
+  useEffect(() => {
+    const onPopState = () => setState(buildState('popstate', clientRouter))
+    const onPushState = () => setState(buildState('pushstate', clientRouter))
+    const onReplaceState = () => setState(buildState('replacestate', clientRouter))
 
     on(window, 'popstate', onPopState)
     on(window, 'pushstate', onPushState)
@@ -28,7 +34,7 @@ export function RouterProvider({ basePath, config, children }: PropsWithChildren
       off(window, 'pushstate', onPushState)
       off(window, 'replacestate', onReplaceState)
     }
-  }, [])
+  }, [clientRouter])
 
   return (
     <RouterContext.Provider value={{clientRouter, ...state}}>
@@ -38,7 +44,7 @@ export function RouterProvider({ basePath, config, children }: PropsWithChildren
 }
 
 
-function buildState(trigger: Trigger): RouterState {
+function buildState(trigger: Trigger, registry: RouterRegistry): RouterState {
   const { state, length } = getHistoryState()
   const { hash, host, hostname, href, origin, pathname, port, protocol, search } = window.location
 
@@ -56,7 +62,7 @@ function buildState(trigger: Trigger): RouterState {
     protocol,
     search,
     navigate: (viewId, url, queryParams, options) => {
-      navigateHistory(viewId, url, queryParams, state, options)
+      navigateHistory(registry, viewId, url, queryParams, state, options)
     },
     close: (viewId) => {
       closeView(viewId, state)

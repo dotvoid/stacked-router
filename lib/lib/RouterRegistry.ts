@@ -41,7 +41,7 @@ export class RouterRegistry {
   #layouts: Record<string, React.ComponentType<React.PropsWithChildren>> = {}
 
   constructor(config: RouterConfig, basePath?: string) {
-    this.#basePath = basePath || this.#basePath
+    this.#basePath = basePath ? this.#normalizePath(basePath) : '/'
     this.#layouts = config.layouts || {}
     this.#registerRoutes(config.routes)
   }
@@ -71,10 +71,38 @@ export class RouterRegistry {
     })
   }
 
+  #normalizePath(path: string): string {
+    // Ensure basePath starts with / and doesn't end with / (unless it's just '/')
+    if (!path.startsWith('/')) {
+      path = '/' + path
+    }
+
+    if (path.length > 1 && path.endsWith('/')) {
+      path = path.slice(0, -1)
+    }
+
+    return path
+  }
+
+  #stripBasePath(fullPath: string): string {
+    // Remove basePath from the beginning of the path (unless it's just '/')
+    if (this.#basePath === '/') {
+      return fullPath
+    }
+
+    if (fullPath.startsWith(this.#basePath)) {
+      return fullPath.slice(this.#basePath.length) || '/'
+    }
+
+    return fullPath
+  }
+
   getViewComponentByPath(givenPath: string) {
-    const path = (givenPath.length > 1 && givenPath.at(-1) === '/')
-      ? givenPath.substring(0, givenPath.length - 1)
-      : givenPath
+    // Strip basePath from the given path before matching
+    const strippedPath = this.#stripBasePath(givenPath)
+    const path = (strippedPath.length > 1 && strippedPath.at(-1) === '/')
+      ? strippedPath.substring(0, strippedPath.length - 1)
+      : strippedPath
 
     for (const key in this.#routes) {
       const route = this.#routes[key]
@@ -95,6 +123,28 @@ export class RouterRegistry {
     }
 
     return null
+  }
+
+  get basePath(): string {
+    return this.#basePath
+  }
+
+  getFullPath(routePath: string): string {
+    // Add basePath to the beginning of the path
+    if (this.#basePath === '/') {
+      return routePath
+    }
+
+    if (routePath === '/') {
+      return this.#basePath
+    }
+
+    // Check if path already starts with basePath
+    if (routePath.startsWith(this.#basePath)) {
+      return routePath
+    }
+
+    return this.#basePath + routePath
   }
 
   getAllViewComponents() {

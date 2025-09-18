@@ -1,5 +1,6 @@
 import { emit } from './events'
 import { parseSearch } from './href'
+import type { RouterRegistry } from './RouterRegistry'
 
 export interface ViewDef {
   id: string
@@ -146,8 +147,9 @@ export function closeView(
 }
 
 export function navigateHistory(
+  registry: RouterRegistry,
   viewId: string | null,
-  url: string,
+  path: string,
   queryParams: Record<string, string | number | boolean>,
   state: ViewState,
   options: {
@@ -159,6 +161,16 @@ export function navigateHistory(
 ) {
   const views = [...state.views]
   const id = crypto.randomUUID()
+
+  // Add basePath to the URL for navigation
+  const fullUrl = registry.getFullPath(path)
+
+  // Create full URL with query params
+  const urlWithParams = new URL(fullUrl, window.location.origin)
+  Object.entries(queryParams).forEach(([key, value]) => {
+    urlWithParams.searchParams.set(key, String(value))
+  })
+  const url = urlWithParams.toString()
 
   // Find index of view if we already have this view open
   const existing = views.find((view) => {
