@@ -49,7 +49,13 @@ It is also possible to define named, or keyed, layouts. When navigating to a vie
 
 Named layouts are named `_layout.name.tsx`.
 
-## Usage and concepts
+### Slots
+
+Layouts support header and footer slots. This allows view components to render content but which is automatically rendered inside the layout instead. This allows styling of headers and footers in the layout while still allowing the views to decide what should be rendered content in the layout header or footer.
+
+## Usage
+
+### Basic setup
 
 **main.tsx**
 
@@ -137,7 +143,7 @@ function PlanningItem({ id }: { id: string }) {
 }
 ```
 
-## Mapping file structure
+### Mapping file structure
 
 Use RouterProvider to store all client side routes. Either through a config or by mapping a directory structure.
 
@@ -269,7 +275,7 @@ _The configuration includes the actual components which is not visible below, wh
 }
 ```
 
-## Integrating with UI libraries
+### Integrating with UI libraries
 
 Stacked router, as most router libraries, expose hooks to allow better integration with (some) UI libraries that can be configured to use the router mechanism inside its UI components like tabs, listboxes, buttons etc. The hook `useNavigate()` handles client-side navigation and `useHref()` can translate router hrefs to native HTML hrefs. Example below is based on HeroUI.
 
@@ -337,7 +343,7 @@ import { Link } from 'stacked-router'
 </Button>
 ```
 
-## Custom navigation
+### Custom navigation
 
 For more custom ways of navigating to another view, the hook `useNavigate()`, can be used. It allows sending _invisible_ props (params not visible in URL), specifying a specific layout or that the view should be rendered as a void view (outside of the stack).
 
@@ -371,9 +377,9 @@ const navigate = useNavigate()
 </button>
 ```
 
-## useView()
+### useView()
 
-Used to get query parameter, props or update query parameters or props or if a named layout is used.
+Used to get query parameter, props, layout or update query parameters or props or if a named layout is used.
 
 ```jsx
 import { useView } from 'stacked-router'
@@ -400,4 +406,88 @@ const { props, setProps, queryParams, setQueryParams, layout } = useView()
 }}>
   Is created
 </button>
+```
+
+### Using layout slots
+
+The example below is a basic HeroUI Modal displayed in a void view (not in the normal stack). Note how the enabled state of the button can be maintained in the view but still rendered in the footer slot styled by the layout.
+
+The layout could be used by many view components but keep all styling of the header and footer in the layout. The order of the slots in the view component is not important.
+
+Also shows how to close a void view, in this case when when the modal closes.
+
+**View component**
+
+```jsx
+import { Layout } from 'stacked-router'
+
+export default function User() {
+  const [disabled, setDisabled] = useState(false)
+  const userName = 'John Doe'
+
+  return (
+    <>
+      <Layout.Header>
+        {userName}
+      </Layout.Header>
+
+      <p>User content here</p>
+
+      <Layout.Footer>
+        <button disabled={disabled}>Save</button>
+      </Layout.Footer>
+    </>
+  )
+}
+```
+
+**Dialog layout**
+
+```jsx
+import {
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure,
+} from '@heroui/react'
+import { useEffect } from 'react'
+import { useView, Slots } from 'stacked-router'
+
+export default function DialogLayout({ children }: {
+  children: React.ReactNode
+}) {
+  const {isOpen, onOpen, onClose} = useDisclosure()
+  const { close } = useView()
+
+  useEffect(() => {
+    onOpen()
+  }, [onOpen])
+
+
+  return (
+    <>
+      <Modal
+        isOpen={isOpen} size='2xl' className='max-h-4/5' onClose={onClose}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            close()
+          }
+        }}
+        hideCloseButton={true}
+      >
+        <ModalContent>
+          <ModalHeader className='flex flex-row gap-4 border-b border-gray-200'>
+            <Slots.Header />{/* Header content from the view */}
+          </ModalHeader>
+
+          <ModalBody className='overflow-y-scroll p-0'>
+            {/* All and any User view content is displayed here */}
+            {children}
+          </ModalBody>
+
+          <ModalFooter className='border-t border-gray-200 flex justify-end gap-4'>
+            <Slots.Footer />{/* Footer content from the view */}
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
+  )
+}
 ```

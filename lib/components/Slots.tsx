@@ -1,17 +1,26 @@
 import { useContext, useEffect } from 'react'
 import { SlotContext } from '../contexts/SlotContext'
 
-export function LayoutHeader() {
+/**
+ * Use in layout to render header slot content
+ */
+export function SlotHeader() {
   const { slots } = useContext(SlotContext)
   return <>{slots.header}</>
 }
 
-export function LayoutFooter() {
+/**
+ * Use in layout to render the footer slot content
+ */
+export function SlotFooter() {
   const { slots } = useContext(SlotContext)
   return <>{slots.footer}</>
 }
 
-export function ViewHeader({ children }: { children: React.ReactNode }) {
+/**
+ * Use in view component to render content in layout header slot
+ */
+export function LayoutHeader({ children }: { children: React.ReactNode }) {
   const { setSlot } = useContext(SlotContext)
 
   useEffect(() => {
@@ -22,7 +31,10 @@ export function ViewHeader({ children }: { children: React.ReactNode }) {
   return null
 }
 
-export function ViewFooter({ children }: { children: React.ReactNode }) {
+/**
+* Use in view component to render content in layout footer slot
+ */
+export function LayoutFooter({ children }: { children: React.ReactNode }) {
   const { setSlot } = useContext(SlotContext)
 
   useEffect(() => {

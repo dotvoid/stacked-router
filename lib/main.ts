@@ -2,8 +2,8 @@
 import {
   LayoutHeader,
   LayoutFooter,
-  ViewHeader,
-  ViewFooter
+  SlotHeader,
+  SlotFooter
 } from './components/Slots'
 
 // Export components
@@ -14,14 +14,14 @@ export { StackedView } from './components/StackedView'
 export { Link } from './components/Link'
 
 
+export const Slots = {
+  Header: SlotHeader,
+  Footer: SlotFooter,
+}
+
 export const Layout = {
   Header: LayoutHeader,
   Footer: LayoutFooter,
-}
-
-export const Slots = {
-  Header: ViewHeader,
-  Footer: ViewFooter,
 }
 
 // Export hooks

@@ -14,5 +14,5 @@ export function SlotProvider({ children }: {
     <SlotContext.Provider value={{ setSlot, slots }}>
       {children}
     </SlotContext.Provider>
-  );
+  )
 }
