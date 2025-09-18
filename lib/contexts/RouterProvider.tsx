@@ -4,14 +4,15 @@ import { off, on } from '../lib/events'
 import { closeView, getHistoryState, navigateHistory } from "../lib/history"
 import { RouterRegistry, RouterConfig } from "../lib/RouterRegistry"
 
-export function RouterProvider({ config, children }: PropsWithChildren & {
+export function RouterProvider({ basePath, config, children }: PropsWithChildren & {
+  basePath?: string
   config: RouterConfig
 }) {
   const [state, setState] = useState(buildState('load'))
 
   const clientRouter = useMemo(() => {
-    return new RouterRegistry(config)
-  }, [config])
+    return new RouterRegistry(config, basePath)
+  }, [config, basePath])
 
   useEffect(() => {
     const onPopState = () => setState(buildState('popstate'))

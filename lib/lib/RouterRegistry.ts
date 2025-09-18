@@ -36,15 +36,17 @@ interface ParsedRoute {
 }
 
 export class RouterRegistry {
-  private routes: Record<string, ParsedRoute> = {}
-  private layouts: Record<string, React.ComponentType<React.PropsWithChildren>> = {}
+  #basePath: string = '/'
+  #routes: Record<string, ParsedRoute> = {}
+  #layouts: Record<string, React.ComponentType<React.PropsWithChildren>> = {}
 
-  constructor(config: RouterConfig) {
-    this.layouts = config.layouts || {}
-    this.registerRoutes(config.routes)
+  constructor(config: RouterConfig, basePath?: string) {
+    this.#basePath = basePath || this.#basePath
+    this.#layouts = config.layouts || {}
+    this.#registerRoutes(config.routes)
   }
 
-  private registerRoutes(routes: RouteConfig[]) {
+  #registerRoutes(routes: RouteConfig[]) {
     routes.forEach(route => {
       // Parse and handle dynamic parameters in paths to views, ignoring
       // all patterns starting with _ (underscore) as they are layouts.
@@ -56,7 +58,7 @@ export class RouterRegistry {
 
       const patternRegex = new RegExp(`^${regexPattern}$`)
 
-      this.routes[route.path] = {
+      this.#routes[route.path] = {
         component: route.component,
         pattern: patternRegex,
         paramKeys,
@@ -74,8 +76,8 @@ export class RouterRegistry {
       ? givenPath.substring(0, givenPath.length - 1)
       : givenPath
 
-    for (const key in this.routes) {
-      const route = this.routes[key]
+    for (const key in this.#routes) {
+      const route = this.#routes[key]
       const match = path.match(route.pattern)
 
       if (match) {
@@ -96,7 +98,7 @@ export class RouterRegistry {
   }
 
   getAllViewComponents() {
-    return Object.values(this.routes).map(route => ({
+    return Object.values(this.#routes).map(route => ({
       Component: route.component,
       Layouts: route.layouts,
       meta: route.meta
@@ -113,13 +115,13 @@ export class RouterRegistry {
     for (let n = 0; n < segments.length; n++) {
       const segmentLayouts = []
 
-      for (const layoutId in this.layouts) {
+      for (const layoutId in this.#layouts) {
         const [layoutPath, key] = layoutId.split('#')
 
         if (layoutPath === path) {
           segmentLayouts.push({
             key,
-            component: this.layouts[layoutId]
+            component: this.#layouts[layoutId]
           })
         }
       }
