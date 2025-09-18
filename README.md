@@ -6,6 +6,11 @@ The router maintains the browser history and navigation and include utilities to
 
 ## Basic concepts
 
+### Routing
+Routing is the process of mapping a URL to a view component (file) and its props. The router provides a `RouterProvider` component that takes a `config` prop which is an array of route definitions, preferrably mapped from the file structure. Each route definition is an object with a `path` and `component` property. The `path` property is a string that defines the URL path for the route. The `component` property is a React component that will be rendered when the route is matched.
+
+Supports a `basePath` property that can be used to automatically prefix all paths in the router navigation.
+
 ### Stacked views
 Allow placing multiple views side by side on large screens but still degrade gracefully on smaller screens (mobile). Mobile friendly should also be large desktop screen friendly.
 
