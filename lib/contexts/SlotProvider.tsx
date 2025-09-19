@@ -1,23 +1,23 @@
 import { useCallback, useState } from 'react'
-import { SlotContext, type Slots } from './SlotContext'
+import { SlotContext } from './SlotContext'
 
 export function SlotProvider({ children }: {
   children: React.ReactNode
 }) {
-  // Store slots per viewId: { viewId1: { header: ..., footer: ... }, viewId2: { ... } }
-  const [viewSlots, setViewSlots] = useState<Record<string, Slots>>({})
+  // Store slots per viewId: { viewId1: { name1: content, name2: content }, viewId2: { ... } }
+  const [viewSlots, setViewSlots] = useState<Record<string, Record<string, React.ReactNode>>>({})
 
-  const setSlot = useCallback((viewId: string, slot: keyof Slots, content?: React.ReactNode) => {
+  const setSlot = useCallback((viewId: string, name: string, content?: React.ReactNode) => {
     setViewSlots(prev => ({
       ...prev,
       [viewId]: {
         ...prev[viewId],
-        [slot]: content
+        [name]: content
       }
     }))
   }, [])
 
-  const getSlots = useCallback((viewId: string): Slots => {
+  const getSlots = useCallback((viewId: string): Record<string, React.ReactNode> => {
     return viewSlots[viewId] || {}
   }, [viewSlots])
 

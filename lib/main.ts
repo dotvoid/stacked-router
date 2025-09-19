@@ -1,28 +1,10 @@
-// Imports
-import {
-  LayoutHeader,
-  LayoutFooter,
-  SlotHeader,
-  SlotFooter
-} from './components/Slots'
-
 // Export components
 export { RouterProvider } from './contexts/RouterProvider'
 export { StackedViewGroup } from './components/StackedViewGroup'
 export { VoidViews } from './components/VoidViews'
 export { StackedView } from './components/StackedView'
 export { Link } from './components/Link'
-
-
-export const Slots = {
-  Header: SlotHeader,
-  Footer: SlotFooter,
-}
-
-export const Layout = {
-  Header: LayoutHeader,
-  Footer: LayoutFooter,
-}
+export { Fill, Outlet } from './components/Slots'
 
 // Export hooks
 export { useNavigate } from './hooks/useNavigate'

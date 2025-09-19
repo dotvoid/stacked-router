@@ -56,7 +56,7 @@ Named layouts are named `_layout.name.tsx`.
 
 ### Slots
 
-Layouts support header and footer slots. This allows view components to render content but which is automatically rendered inside the layout instead. This allows styling of headers and footers in the layout while still allowing the views to decide what should be rendered content in the layout header or footer.
+Layouts support defining named slots. This allows view components to render content which is automatically rendered inside the layout instead. This allow for styling of for example headers and footers in the layout while still allowing the views to have the logic and decide what should be rendered these slots.
 
 ## Usage
 

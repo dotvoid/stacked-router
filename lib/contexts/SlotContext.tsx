@@ -1,13 +1,8 @@
 import { createContext } from 'react'
 
-export interface Slots {
-  header?: React.ReactNode
-  footer?: React.ReactNode
-}
-
 export interface SlotContextType {
-  setSlot: (viewId: string, slot: keyof Slots, content?: React.ReactNode) => void
-  getSlots: (viewId: string) => Slots
+  setSlot: (viewId: string, name: string, content?: React.ReactNode) => void
+  getSlots: (viewId: string) => Record<string, React.ReactNode>
 }
 
 export const SlotContext = createContext<SlotContextType>({
