@@ -6,6 +6,7 @@ import { StackedView } from '../hooks/useViewStack'
 import { DefaultLayout } from './DefaultLayout'
 import type { ParsedRouteLayout } from '../lib/RouterRegistry'
 import { SlotProvider } from '../contexts/SlotProvider'
+import { ErrorBoundary } from './ErrorBoundary'
 
 export function StackedViewGroup({ duration = 0, className, style = {} }: {
   duration?: number
@@ -111,17 +112,19 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
             : [{ component: DefaultLayout }] as ParsedRouteLayout[]
 
           return (
-            <ViewProvider
-              key={view.id}
-              id={view.id}
-              width={widths[i]}
-              duration={duration}
-              params={params}
-              queryParams={view.queryParams}
-              props={view.props}
-            >
-              {renderNestedLayouts(LayoutWrappers, Component, params)}
-            </ViewProvider>
+            <ErrorBoundary key={view.id} viewUrl={view.url || '/'}>
+              <ViewProvider
+                key={view.id}
+                id={view.id}
+                width={widths[i]}
+                duration={duration}
+                params={params}
+                queryParams={view.queryParams}
+                props={view.props}
+              >
+                {renderNestedLayouts(LayoutWrappers, Component, params)}
+              </ViewProvider>
+            </ErrorBoundary>
           )
         })}
       </div>

@@ -1,4 +1,10 @@
-import type { RouteConfig, RouterConfig, PageComponent } from './RouterRegistry'
+import type {
+  RouteConfig,
+  RouterConfig,
+  PageComponent,
+  ErrorComponentProps
+} from './RouterRegistry'
+
 
 /**
  * Helper function to discover routes from import.meta.glob
@@ -9,6 +15,7 @@ export function mapRoutes(
 ): RouterConfig {
   const routes: RouteConfig[] = []
   const layouts: Record<string, React.ComponentType<unknown>> = {}
+  const errors: Record<string, React.ComponentType<ErrorComponentProps>> = {}
 
   Object.entries(modules).forEach(([modulePath, module]) => {
     let pathPattern = modulePath
@@ -25,6 +32,16 @@ export function mapRoutes(
     } else if (pathPattern && !pathPattern.startsWith('/')) {
       // Ensure non-root paths start with '/'
       pathPattern = '/' + pathPattern
+    }
+
+    // Check if this is an error file
+    const errorMatch = pathPattern.match(/^(.*)\/(_error)$/)
+    if (errorMatch) {
+      const [, parentPath] = errorMatch
+      const errorPath = parentPath || '/'
+      console.log(`Storing error component for path: ${errorPath}`) // Debug log
+      errors[errorPath] = (module as PageComponent).default as React.ComponentType<ErrorComponentProps>
+      return
     }
 
     // Check if this is a layout file
@@ -54,5 +71,5 @@ export function mapRoutes(
     }
   })
 
-  return { routes, layouts }
+  return { routes, layouts, errors }
 }

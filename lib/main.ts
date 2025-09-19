@@ -17,6 +17,7 @@ export { mapRoutes } from './lib/mapRoutes'
 // Export types
 export type {
   PageComponent,
+  ErrorComponentProps,
   ViewMetadata,
   RouteConfig,
   RouterConfig

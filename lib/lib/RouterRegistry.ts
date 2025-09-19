@@ -1,8 +1,15 @@
-import { BreakpointWidth } from "./allocation"
+import { ErrorInfo } from 'react'
+import { BreakpointWidth } from './allocation'
 
 export interface PageComponent {
   default: React.ComponentType<unknown>
   [key: string]: unknown
+}
+
+export interface ErrorComponentProps {
+  error: Error
+  errorInfo?: ErrorInfo
+  reset: () => void
 }
 
 export interface ViewMetadata {
@@ -19,6 +26,7 @@ export interface RouteConfig {
 export interface RouterConfig {
   routes: RouteConfig[]
   layouts?: Record<string, React.ComponentType<React.PropsWithChildren>>
+  errors?: Record<string, React.ComponentType<{ error: Error; reset: () => void }>>
 }
 
 export interface ParsedRouteLayout {
@@ -39,10 +47,12 @@ export class RouterRegistry {
   #basePath: string = '/'
   #routes: Record<string, ParsedRoute> = {}
   #layouts: Record<string, React.ComponentType<React.PropsWithChildren>> = {}
+  #errors: Record<string, React.ComponentType<ErrorComponentProps>> = {}
 
   constructor(config: RouterConfig, basePath?: string) {
     this.#basePath = basePath ? this.#normalizePath(basePath) : '/'
     this.#layouts = config.layouts || {}
+    this.#errors = config.errors || {}
     this.#registerRoutes(config.routes)
   }
 
@@ -125,6 +135,67 @@ export class RouterRegistry {
     return null
   }
 
+  getErrorComponentByPath(givenPath: string): React.ComponentType<ErrorComponentProps> | null {
+    console.log('=== DEBUG ERROR COMPONENT LOOKUP ===')
+    console.log('Looking for error component for route:', givenPath)
+    console.log('Available error paths:', Object.keys(this.#errors))
+
+    // Strip basePath from the given path before matching
+    const strippedPath = this.#stripBasePath(givenPath)
+    const path = (strippedPath.length > 1 && strippedPath.at(-1) === '/')
+      ? strippedPath.substring(0, strippedPath.length - 1)
+      : strippedPath
+
+    // First, try to find exact path match
+    if (this.#errors[path]) {
+      console.log('Found exact match for:', path)
+      return this.#errors[path]
+    }
+
+    // Then walk up the directory tree
+    const segments = path.split('/').filter(Boolean)
+    console.log('Path segments:', segments)
+
+    // Check from most specific to least specific path
+    for (let i = segments.length; i >= 1; i--) {
+      const checkPath = '/' + segments.slice(0, i).join('/')
+      console.log('Checking path:', checkPath)
+
+      if (this.#errors[checkPath]) {
+        console.log('Found error component at:', checkPath)
+        return this.#errors[checkPath]
+      }
+    }
+
+    // Finally check root level
+    console.log('Checking root path: /')
+    if (this.#errors['/']) {
+      console.log('Found root error component')
+      return this.#errors['/']
+    }
+
+    console.log('No error component found')
+    return null
+  }
+
+  // getErrorComponentByPath(routePath: string): React.ComponentType<ErrorComponentProps> | null {
+  //   // Strip basePath and normalize
+  //   const strippedPath = this.#stripBasePath(routePath)
+  //   const segments = strippedPath.split('/').filter(Boolean)
+
+  //   // Check from most specific to least specific path
+  //   // e.g., for '/users/profile' check: '/users/profile', '/users', '/'
+  //   for (let i = segments.length; i >= 0; i--) {
+  //     const checkPath = i === 0 ? '/' : '/' + segments.slice(0, i).join('/')
+
+  //     if (this.#errors[checkPath]) {
+  //       return this.#errors[checkPath]
+  //     }
+  //   }
+
+  //   return null
+  // }
+
   get basePath(): string {
     return this.#basePath
   }
@@ -145,6 +216,27 @@ export class RouterRegistry {
     }
 
     return this.#basePath + routePath
+  }
+
+  getPathFromUrl(fullUrl: string): string {
+    try {
+      // Extract pathname from URL object
+      const url = new URL(fullUrl)
+      let pathname = url.pathname
+
+      // Strip basePath if it exists
+      pathname = this.#stripBasePath(pathname)
+
+      // Remove trailing slash (unless it's the root)
+      if (pathname.length > 1 && pathname.endsWith('/')) {
+        pathname = pathname.slice(0, -1)
+      }
+
+      return pathname
+    } catch (ex) { // eslint-disable-line
+      // If URL parsing fails, assume it's already a path
+      return this.#stripBasePath(fullUrl)
+    }
   }
 
   getAllViewComponents() {

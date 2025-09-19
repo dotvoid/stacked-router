@@ -58,6 +58,10 @@ Named layouts are named `_layout.name.tsx`.
 
 Layouts support defining named slots. This allows view components to render content which is automatically rendered inside the layout instead. This allow for styling of for example headers and footers in the layout while still allowing the views to have the logic and decide what should be rendered these slots.
 
+### Error Boundaries
+
+Stacked router includes automatic error boundaries around each view that catch rendering errors and display contextual error components.
+
 ## Usage
 
 ### Basic setup
@@ -498,3 +502,37 @@ export default function DialogLayout({ children }: {
   )
 }
 ```
+
+### Error components
+
+Create `_error.tsx` files to handle errors at different levels of your application. The router finds the closest error component up the directory tree.
+
+**_error.tsx**
+
+```tsx
+import type { ErrorComponentProps } from 'stacked-router'
+
+export default function MyError({ error, reset }: ErrorComponentProps) {
+  return (
+    <div>
+      <h2>Something went wrong</h2>
+      <p>{error.message}</p>
+      <button onClick={reset}>Try again</button>
+    </div>
+  )
+}
+```
+
+**File structure example**
+
+```
+views/
+    _error.tsx          # Root fallback for all views
+    users/
+        _error.tsx      # Specific to user section
+        index.tsx       # Uses users/_error.tsx
+    plannings/
+        index.tsx       # Uses root _error.tsx
+```
+
+The `reset` function clears the error and re-renders the component. Error boundaries only catch rendering errors, not errors in event handlers or async code.

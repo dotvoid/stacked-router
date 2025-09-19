@@ -5,6 +5,7 @@ import { StackedView } from '../hooks/useViewStack'
 import { DefaultLayout } from './DefaultLayout'
 import type { ParsedRouteLayout } from '../lib/RouterRegistry'
 import { SlotProvider } from '../contexts/SlotProvider'
+import { ErrorBoundary } from './ErrorBoundary'
 
 export function VoidViews({ className, style = {} }: {
   duration?: number
@@ -36,18 +37,20 @@ function RenderedViews({ views, className, style = {} }: {
             : [{ component: DefaultLayout}] as ParsedRouteLayout[]
 
           return (
-            <ViewProvider
-              key={view.id}
-              id={view.id}
-              width={0}
-              duration={0}
-              params={params}
-              queryParams={view.queryParams}
-              props={view.props}
-              layout={view.layout}
-            >
-              {renderNestedLayouts(LayoutWrappers, Component, params)}
-            </ViewProvider>
+            <ErrorBoundary key={view.id} viewUrl={view.url || '/'}>
+              <ViewProvider
+                key={view.id}
+                id={view.id}
+                width={0}
+                duration={0}
+                params={params}
+                queryParams={view.queryParams}
+                props={view.props}
+                layout={view.layout}
+              >
+                {renderNestedLayouts(LayoutWrappers, Component, params)}
+              </ViewProvider>
+            </ErrorBoundary>
           )
         })}
       </div>
