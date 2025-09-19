@@ -415,16 +415,18 @@ const { props, setProps, queryParams, setQueryParams, layout } = useView()
 
 ### Using layout slots
 
+A slot is defined in the layout using the component `<Outlet/>` and filled with content in the view using the component `<Fill/>`. The prop `name` is used to identify the slot.
+
 The example below is a basic HeroUI Modal displayed in a void view (not in the normal stack). Note how the enabled state of the button can be maintained in the view but still rendered in the footer slot styled by the layout.
 
 The layout could be used by many view components but keep all styling of the header and footer in the layout. The order of the slots in the view component is not important.
 
-Also shows how to close a void view, in this case when when the modal closes.
+_Also shows how to close a void view, in this case when when the modal closes._
 
 **View component**
 
 ```jsx
-import { Layout } from 'stacked-router'
+import { Fill } from 'stacked-router'
 
 export default function User() {
   const [disabled, setDisabled] = useState(false)
@@ -432,15 +434,15 @@ export default function User() {
 
   return (
     <>
-      <Layout.Header>
+      <Fill slot='header'>
         {userName}
-      </Layout.Header>
+      </Fill>
 
       <p>User content here</p>
 
-      <Layout.Footer>
+      <Fill slot='footer'>
         <button disabled={disabled}>Save</button>
-      </Layout.Footer>
+      </Fill>
     </>
   )
 }
@@ -453,7 +455,7 @@ import {
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure,
 } from '@heroui/react'
 import { useEffect } from 'react'
-import { useView, Slots } from 'stacked-router'
+import { useView, Outlet } from 'stacked-router'
 
 export default function DialogLayout({ children }: {
   children: React.ReactNode
@@ -479,7 +481,7 @@ export default function DialogLayout({ children }: {
       >
         <ModalContent>
           <ModalHeader className='flex flex-row gap-4 border-b border-gray-200'>
-            <Slots.Header />{/* Header content from the view */}
+            <Outlet slot='header' />{/* Header content from the view */}
           </ModalHeader>
 
           <ModalBody className='overflow-y-scroll p-0'>
@@ -488,7 +490,7 @@ export default function DialogLayout({ children }: {
           </ModalBody>
 
           <ModalFooter className='border-t border-gray-200 flex justify-end gap-4'>
-            <Slots.Footer />{/* Footer content from the view */}
+            <Outlet slot='footer' />{/* Footer content from the view */}
           </ModalFooter>
         </ModalContent>
       </Modal>
