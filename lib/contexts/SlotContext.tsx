@@ -6,11 +6,11 @@ export interface Slots {
 }
 
 export interface SlotContextType {
-  setSlot: (slot: keyof Slots, content?: React.ReactNode) => void
-  slots: Slots
+  setSlot: (viewId: string, slot: keyof Slots, content?: React.ReactNode) => void
+  getSlots: (viewId: string) => Slots
 }
 
 export const SlotContext = createContext<SlotContextType>({
   setSlot: () => {},
-  slots: {}
+  getSlots: () => ({})
 })

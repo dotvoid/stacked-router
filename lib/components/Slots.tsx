@@ -1,11 +1,14 @@
 import { useContext, useEffect } from 'react'
 import { SlotContext } from '../contexts/SlotContext'
+import { useView } from '../main'
 
 /**
  * Use in layout to render header slot content
  */
 export function SlotHeader() {
-  const { slots } = useContext(SlotContext)
+  const { viewId } = useView()
+  const { getSlots } = useContext(SlotContext)
+  const slots = getSlots(viewId)
   return <>{slots.header}</>
 }
 
@@ -13,7 +16,9 @@ export function SlotHeader() {
  * Use in layout to render the footer slot content
  */
 export function SlotFooter() {
-  const { slots } = useContext(SlotContext)
+  const { viewId } = useView()
+  const { getSlots } = useContext(SlotContext)
+  const slots = getSlots(viewId)
   return <>{slots.footer}</>
 }
 
@@ -21,26 +26,28 @@ export function SlotFooter() {
  * Use in view component to render content in layout header slot
  */
 export function LayoutHeader({ children }: { children: React.ReactNode }) {
+  const { viewId } = useView()
   const { setSlot } = useContext(SlotContext)
 
   useEffect(() => {
-    setSlot('header', children)
-    return () => setSlot('header', null)
-  }, [children, setSlot])
+    setSlot(viewId, 'header', children)
+    return () => setSlot(viewId, 'header', null)
+  }, [viewId, children, setSlot])
 
   return null
 }
 
 /**
-* Use in view component to render content in layout footer slot
+ * Use in view component to render content in layout footer slot
  */
 export function LayoutFooter({ children }: { children: React.ReactNode }) {
+  const { viewId } = useView()
   const { setSlot } = useContext(SlotContext)
 
   useEffect(() => {
-    setSlot('footer', children)
-    return () => setSlot('footer', null)
-  }, [children, setSlot])
+    setSlot(viewId, 'footer', children)
+    return () => setSlot(viewId, 'footer', null)
+  }, [viewId, children, setSlot])
 
   return null
 }
