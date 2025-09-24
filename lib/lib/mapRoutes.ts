@@ -66,7 +66,6 @@ export function mapRoutes(
         component: (module as PageComponent).default,
         // @ts-expect-error meta is not defined
         meta: module.default?.meta || { breakpoints: [] }
-        // TODO: Get hold of exported loader function
       })
     }
   })
