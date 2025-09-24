@@ -1,18 +1,41 @@
-import { PropsWithChildren, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { RouterContext, RouterState, Trigger } from "./RouterContext"
 import { off, on } from '../lib/events'
 import { closeView, getHistoryState, navigateHistory } from "../lib/history"
 import { RouterRegistry, RouterConfig } from "../lib/RouterRegistry"
 
-export function RouterProvider({ basePath, config, children }: PropsWithChildren & {
+export interface ExternalRoute {
+  url: string
+}
+
+export function RouterProvider({ basePath, config, external = [], children }: {
   basePath?: string
   config: RouterConfig
+  external?: ExternalRoute[]
+  children?: React.ReactNode
 }) {
   const clientRouter = useMemo(() => {
     return new RouterRegistry(config, basePath)
   }, [config, basePath])
 
   const [state, setState] = useState(buildState('load', clientRouter))
+
+  // Import external routes
+  useEffect(() => {
+    for (const externalRoute of external ?? []) {
+     import(externalRoute.url)
+      .then((module) => {
+        if (!Array.isArray(module.routes)) {
+          throw new Error(`Invalid routes in ${externalRoute.url}`)
+        }
+
+        clientRouter.registerRoutes(module.routes, true)
+      })
+      .catch((err) => {
+        console.error(err.message)
+      })
+    }
+  }, [external, clientRouter])
 
   useEffect(() => {
     if (basePath && basePath !== '/' && window.location.pathname === '/') {

@@ -54,10 +54,10 @@ export class RouterRegistry {
     this.#basePath = basePath ? this.#normalizePath(basePath) : '/'
     this.#layouts = config.layouts || {}
     this.#errors = config.errors || {}
-    this.#registerRoutes(config.routes)
+    this.registerRoutes(config.routes)
   }
 
-  #registerRoutes(routes: RouteConfig[]) {
+  registerRoutes(routes: RouteConfig[], throwErrors = false) {
     routes.forEach(route => {
       // Parse and handle dynamic parameters in paths to views, ignoring
       // all patterns starting with _ (underscore) as they are layouts.
@@ -69,6 +69,15 @@ export class RouterRegistry {
 
       const patternRegex = new RegExp(`^${regexPattern}$`)
 
+      // Handle invalid components
+      if (!route.component || route.component instanceof Function !== true || route.path[0] !== '/') {
+        if (throwErrors) {
+          throw new Error(`Invalid component for route ${route.path || 'undefined path'}`)
+        }
+
+        return
+      }
+
       this.#routes[route.path] = {
         component: route.component,
         pattern: patternRegex,
@@ -76,7 +85,7 @@ export class RouterRegistry {
         originalPath: route.path,
         layouts: (route.layouts?.length)
           ? route.layouts.map((l) => { return {component: l} }) // Component specified routes
-          : this.constructLayoutList(route.path), // Path found routes
+          : this.#constructLayoutList(route.path), // Path found routes
         meta: route.meta || { breakpoints: [] }
       }
     })
@@ -145,7 +154,6 @@ export class RouterRegistry {
 
     // First, try to find exact path match
     if (this.#errors[path]) {
-      console.log('Found exact match for:', path)
       return this.#errors[path]
     }
 
@@ -159,7 +167,6 @@ export class RouterRegistry {
       console.log('Checking path:', checkPath)
 
       if (this.#errors[checkPath]) {
-        console.log('Found error component at:', checkPath)
         return this.#errors[checkPath]
       }
     }
@@ -167,31 +174,12 @@ export class RouterRegistry {
     // Finally check root level
     console.log('Checking root path: /')
     if (this.#errors['/']) {
-      console.log('Found root error component')
       return this.#errors['/']
     }
 
     console.log('No error component found')
     return null
   }
-
-  // getErrorComponentByPath(routePath: string): React.ComponentType<ErrorComponentProps> | null {
-  //   // Strip basePath and normalize
-  //   const strippedPath = this.#stripBasePath(routePath)
-  //   const segments = strippedPath.split('/').filter(Boolean)
-
-  //   // Check from most specific to least specific path
-  //   // e.g., for '/users/profile' check: '/users/profile', '/users', '/'
-  //   for (let i = segments.length; i >= 0; i--) {
-  //     const checkPath = i === 0 ? '/' : '/' + segments.slice(0, i).join('/')
-
-  //     if (this.#errors[checkPath]) {
-  //       return this.#errors[checkPath]
-  //     }
-  //   }
-
-  //   return null
-  // }
 
   get basePath(): string {
     return this.#basePath
@@ -244,7 +232,7 @@ export class RouterRegistry {
     }))
   }
 
-  private constructLayoutList(routePath: string): ParsedRouteLayout[] {
+  #constructLayoutList(routePath: string): ParsedRouteLayout[] {
     const layouts: ParsedRouteLayout[] = []
 
     // Segment the view path (e.g ['/', 'user', 'profile'])
