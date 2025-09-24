@@ -11,6 +11,8 @@ Routing is the process of mapping a URL to a view component (file) and its props
 
 Supports a `basePath` property that can be used to automatically prefix all paths in the router navigation.
 
+Supports external routes that are loaded from remote urls. These routes are loaded asynchronously and can be used to load content from external sources. External routes can be defined using the `external` property in the route definition. The `external` property is a string that defines the URL for the external route.
+
 ### Stacked views
 Allow placing multiple views side by side on large screens but still degrade gracefully on smaller screens (mobile). Mobile friendly should also be large desktop screen friendly.
 
