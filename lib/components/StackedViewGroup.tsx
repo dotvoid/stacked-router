@@ -107,6 +107,16 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
     <SlotProvider>
       <div className={className} style={style}>
         {views.map(({ view, params, Layouts, Component }, i) => {
+          // If no component was found for requested view, render a 404 error boundary
+          if (!Component) {
+            return <ErrorBoundary
+              key={view.id}
+              viewUrl={view.url}
+              errorCode={404}
+              error={new Error('Not found')}
+            />
+          }
+
           const LayoutWrappers = (Layouts?.length)
             ? Layouts.filter(layout => layout.key === view.layout)
             : [{ component: DefaultLayout }] as ParsedRouteLayout[]
@@ -135,12 +145,12 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
 // Helper function to recursively render nested layouts
 function renderNestedLayouts(
   layouts: Array<{ key?: string; component: React.ComponentType<React.PropsWithChildren> }>,
-  Component: React.ComponentType<unknown> | undefined,
+  Component: React.ComponentType<unknown>,
   params?: Record<string, unknown>
 ): React.ReactNode {
   if (layouts.length === 0) {
     // Base case: no more layouts, render the component
-    return Component ? <Component {...(params || {})} /> : null
+    return <Component {...(params || {})} />
   }
 
   const [currentLayout, ...remainingLayouts] = layouts

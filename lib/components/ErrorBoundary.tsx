@@ -2,12 +2,15 @@ import { Component, ErrorInfo, ReactNode } from 'react'
 import { ErrorResolver } from './ErrorResolver'
 
 interface Props {
-  children: ReactNode
+  children?: ReactNode
   viewUrl: string
+  error?: Error
+  errorCode?: number
 }
 
 interface State {
   hasError: boolean
+  errorCode?: number
   error?: Error
   errorInfo?: ErrorInfo
 }
@@ -15,7 +18,11 @@ interface State {
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
-    this.state = { hasError: false }
+    this.state = {
+      hasError: !!props.error,
+      errorCode: props.errorCode,
+      error: props.error
+    }
   }
 
   static getDerivedStateFromError(error: Error): State {
@@ -39,6 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <ErrorResolver
           viewUrl={this.props.viewUrl}
           error={this.state.error}
+          errorCode={this.state.errorCode}
           errorInfo={this.state.errorInfo}
           reset={this.reset}
         />

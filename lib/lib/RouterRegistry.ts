@@ -8,6 +8,7 @@ export interface PageComponent {
 
 export interface ErrorComponentProps {
   error: Error
+  errorCode?: number
   errorInfo?: ErrorInfo
   reset: () => void
 }
@@ -136,10 +137,6 @@ export class RouterRegistry {
   }
 
   getErrorComponentByPath(givenPath: string): React.ComponentType<ErrorComponentProps> | null {
-    console.log('=== DEBUG ERROR COMPONENT LOOKUP ===')
-    console.log('Looking for error component for route:', givenPath)
-    console.log('Available error paths:', Object.keys(this.#errors))
-
     // Strip basePath from the given path before matching
     const strippedPath = this.#stripBasePath(givenPath)
     const path = (strippedPath.length > 1 && strippedPath.at(-1) === '/')

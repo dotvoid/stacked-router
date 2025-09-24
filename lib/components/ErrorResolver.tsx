@@ -5,11 +5,13 @@ import { useRouter } from '../hooks/useRouter'
 export function ErrorResolver({
   viewUrl,
   error,
+  errorCode,
   errorInfo,
   reset
 }: {
   viewUrl: string
   error: Error
+  errorCode?: number
   errorInfo?: ErrorInfo
   reset: () => void
 }) {
@@ -19,7 +21,14 @@ export function ErrorResolver({
   )
 
   if (ErrorComponent) {
-    return <ErrorComponent error={error} errorInfo={errorInfo} reset={reset} />
+    return (
+      <ErrorComponent
+        error={error}
+        errorCode={errorCode ?? 0}
+        errorInfo={errorInfo}
+        reset={reset}
+      />
+    )
   }
 
   // Fallback error UI when no _error.tsx is found

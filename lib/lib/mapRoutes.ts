@@ -39,7 +39,7 @@ export function mapRoutes(
     if (errorMatch) {
       const [, parentPath] = errorMatch
       const errorPath = parentPath || '/'
-      console.log(`Storing error component for path: ${errorPath}`) // Debug log
+
       errors[errorPath] = (module as PageComponent).default as React.ComponentType<ErrorComponentProps>
       return
     }
