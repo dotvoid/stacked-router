@@ -23,6 +23,7 @@ export function ViewProvider({
 }) {
   const { state, close } = useRouter()
   const [isActive, setIsActive] = useState(viewId === state.id)
+  const [localProps, setLocalProps] = useState(props || {})
 
   useEffect(() => {
     setIsActive(viewId === state.id)
@@ -36,29 +37,21 @@ export function ViewProvider({
       duration,
       params,
       queryParams,
-      props,
+      props: localProps,
       layout,
       setProps: (partialProps, replaceAll) => {
-        const newProps = (replaceAll !== true)
-          ? { ...props || {} } // Use existing props as base
-          : {} // Start with empty object to replace existing props
+        const newProps = (replaceAll)
+          ? partialProps || {}
+          : { ...props, ...partialProps }
 
-        let update = false
-        for (const key in partialProps) {
-          const value = partialProps[key]
-
-          if (typeof value !== 'undefined') {
-            newProps[key] = value // Set new value
-            update = true
-          } else if (Object.prototype.hasOwnProperty.call(newProps, key)) {
-            delete newProps[key] // Delete existing value
-            update = true
+        for (const key in newProps) {
+          if (newProps[key] === undefined) {
+            delete newProps[key]
           }
         }
 
-        if (update || replaceAll === true) {
-          updateProps(viewId, newProps)
-        }
+        setLocalProps(newProps as Record<string, string | number | boolean>)
+        updateProps(viewId, newProps as Record<string, string | number | boolean>)
       },
       setQueryParams: (partialQueryParams, replaceAll) => {
         const newQueryParams = (replaceAll !== true)
