@@ -84,7 +84,7 @@ export class RouterRegistry {
         paramKeys,
         originalPath: route.path,
         layouts: (route.layouts?.length)
-          ? route.layouts.map((l) => { return {component: l} }) // Component specified routes
+          ? route.layouts.map((l) => { return { component: l } }) // Component specified routes
           : this.#constructLayoutList(route.path), // Path found routes
         meta: route.meta || { breakpoints: [] }
       }
@@ -164,7 +164,6 @@ export class RouterRegistry {
     // Check from most specific to least specific path
     for (let i = segments.length; i >= 1; i--) {
       const checkPath = '/' + segments.slice(0, i).join('/')
-      console.log('Checking path:', checkPath)
 
       if (this.#errors[checkPath]) {
         return this.#errors[checkPath]
@@ -172,7 +171,6 @@ export class RouterRegistry {
     }
 
     // Finally check root level
-    console.log('Checking root path: /')
     if (this.#errors['/']) {
       return this.#errors['/']
     }
