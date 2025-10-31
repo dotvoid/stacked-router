@@ -21,19 +21,21 @@ export function RouterProvider({ basePath, config, external = [], children }: {
   const [state, setState] = useState(buildState('load', clientRouter))
 
   // Import external routes
+  // TODO: Implement external route registration of capabilities
+  // TODO: Handle issues with external route registration
   useEffect(() => {
     for (const externalRoute of external ?? []) {
-     import(externalRoute.url)
-      .then((module) => {
-        if (!Array.isArray(module.routes)) {
-          throw new Error(`Invalid routes in ${externalRoute.url}`)
-        }
+      import(externalRoute.url)
+        .then((module) => {
+          if (!Array.isArray(module.routes)) {
+            throw new Error(`Invalid routes in ${externalRoute.url}`)
+          }
 
-        clientRouter.registerRoutes(module.routes, true)
-      })
-      .catch((err) => {
-        console.error(err.message)
-      })
+          clientRouter.registerRoutes(module.routes, true)
+        })
+        .catch((err) => {
+          console.error(err.message)
+        })
     }
   }, [external, clientRouter])
 
@@ -60,7 +62,7 @@ export function RouterProvider({ basePath, config, external = [], children }: {
   }, [clientRouter])
 
   return (
-    <RouterContext.Provider value={{clientRouter, ...state}}>
+    <RouterContext.Provider value={{ clientRouter, ...state }}>
       {children}
     </RouterContext.Provider>
   )

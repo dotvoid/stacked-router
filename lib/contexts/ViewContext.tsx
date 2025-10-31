@@ -1,4 +1,5 @@
 import { createContext } from 'react'
+import type { ViewState } from '../lib/history'
 
 export interface ViewContextType {
   viewId: string
@@ -12,7 +13,8 @@ export interface ViewContextType {
   queryParam: (key: string) => string | number | boolean | undefined
   props?: Record<string, string | number | boolean>
   setProps: (queryParams: Record<string, string | number | boolean | undefined>, replaceAll?: boolean) => void
-  close: () => void
+  close: () => void,
+  state: ViewState
 }
 
 export const ViewContext = createContext<ViewContextType>({
@@ -24,5 +26,6 @@ export const ViewContext = createContext<ViewContextType>({
   setQueryParams: () => { },
   setProps: () => { },
   queryParam: () => { return undefined },
-  close: () => { }
+  close: () => { },
+  state: { id: '', views: [] }
 })

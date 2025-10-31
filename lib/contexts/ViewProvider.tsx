@@ -39,6 +39,7 @@ export function ViewProvider({
       queryParams,
       props: localProps,
       layout,
+      state,
       setProps: (partialProps, replaceAll) => {
         const newProps = (replaceAll)
           ? partialProps || {}
