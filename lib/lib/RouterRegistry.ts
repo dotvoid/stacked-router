@@ -14,7 +14,8 @@ export interface ErrorComponentProps {
 }
 
 export interface ViewMetadata {
-  breakpoints: BreakpointWidth[]
+  type?: string
+  breakpoints?: BreakpointWidth[]
 }
 
 export interface RouteConfig {

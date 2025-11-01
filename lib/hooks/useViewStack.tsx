@@ -29,14 +29,16 @@ export function useViewStack(): {
 
     state.views.forEach((view) => {
       const url = new URL(view.url, 'http://dummy.base')
-      const { Component, meta, Layouts, params } =
-        clientRouter?.getViewComponentByPath(url.pathname) || {}
+      const routeData = clientRouter?.getViewComponentByPath(url.pathname)
+
+      // Prefer params from state (if they exist), otherwise use parsed params
+      const params = view.params || routeData?.params || {}
 
       const stackedView: StackedView = {
         view,
-        meta,
-        Component,
-        Layouts,
+        meta: routeData?.meta,
+        Component: routeData?.Component,
+        Layouts: routeData?.Layouts,
         params
       }
 

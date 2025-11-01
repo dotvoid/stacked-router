@@ -1,10 +1,12 @@
 import { emit } from './events'
 import { parseSearch } from './href'
-import type { RouterRegistry } from './RouterRegistry'
+import type { RouterRegistry, ViewMetadata } from './RouterRegistry'
 
 export interface ViewDef {
   id: string
   url: string
+  meta?: ViewMetadata
+  params?: Record<string, string>
   queryParams?: Record<string, string | number | boolean>
   props?: Record<string, string | number | boolean>
   layout?: string
@@ -166,7 +168,11 @@ export function navigateHistory(
   })
   const url = urlWithParams.toString()
 
-  // Find index of view if we already have this view open
+  // Parse route params from the path
+  const parsedRoute = registry.getViewComponentByPath(urlWithParams.pathname)
+  const params = parsedRoute?.params || {}
+
+  // Find index of view if we alre ady have this view open
   const existing = views.find((view) => {
     return url === view.url
   })
@@ -184,6 +190,8 @@ export function navigateHistory(
         : {
           id,
           url,
+          meta: parsedRoute?.meta ?? undefined,
+          params,
           queryParams,
           props: options.props,
           target: options?.target,
@@ -211,6 +219,8 @@ export function navigateHistory(
     views.push({
       id,
       url,
+      meta: parsedRoute?.meta ?? undefined,
+      params,
       queryParams,
       props: options.props,
       target: options?.target,
@@ -232,6 +242,8 @@ export function navigateHistory(
   newViews.push({
     id,
     url,
+    meta: parsedRoute?.meta ?? undefined,
+    params,
     queryParams,
     props: options.props,
     target: options?.target,
