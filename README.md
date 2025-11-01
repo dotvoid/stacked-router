@@ -419,6 +419,60 @@ const { props, setProps, queryParams, setQueryParams, layout } = useView()
 </button>
 ```
 
+### useOpenViews()
+
+Can be used to get information on a subset of open views that match a given criteria. It is only possible to find views that have set the type in the view meta information. Useful to be able to mark rows that match an open view in a table or listing.
+
+Example view:
+
+```jsx
+const meta: ViewMetadata = {
+  type: 'customer'
+}
+
+function Customer({ id }: { id: string }) {
+  return <div>Example component</div>
+}
+
+Customer.meta = meta
+export default Customer
+```
+
+Usage in other views:
+
+```jsx
+import { useOpenViews } from 'stacked-router'
+
+export function CustomerList() {
+  // Get all customers
+  const customers = useCustomers()
+
+  // Get all open customer views
+  const customerViews = useOpenViews('customer')
+
+  return (
+    <div>
+      {customers.map(c => (
+        <div
+          key={c.id}
+          className={customerViews.includes(c.id) ? 'active' : ''}
+        >
+          {c.id}: {c.name}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+It is also possible to match against params (url path params).
+```jsx
+const specificView = useOpenViews('article', {
+  categoryId: 'news',
+  articleId: '456'
+})
+```
+
 ### Using layout slots
 
 A slot is defined in the layout using the component `<Outlet/>` and filled with content in the view using the component `<Fill/>`. The prop `name` is used to identify the slot.

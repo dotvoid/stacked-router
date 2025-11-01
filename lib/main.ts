@@ -10,6 +10,7 @@ export { Fill, Outlet } from './components/Slots'
 export { useNavigate } from './hooks/useNavigate'
 export { useHref } from './hooks/useHref'
 export { useView } from './hooks/useView'
+export { useOpenViews } from './hooks/useOpenViews'
 
 // Export utils
 export { mapRoutes } from './lib/mapRoutes'

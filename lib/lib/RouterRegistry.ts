@@ -160,7 +160,6 @@ export class RouterRegistry {
 
     // Then walk up the directory tree
     const segments = path.split('/').filter(Boolean)
-    console.log('Path segments:', segments)
 
     // Check from most specific to least specific path
     for (let i = segments.length; i >= 1; i--) {
