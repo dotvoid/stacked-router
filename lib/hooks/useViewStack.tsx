@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from './useRouter'
-import { getTransitionState, ViewDef, ViewTransiationMode } from '../lib/history'
-import { usePrevious } from './usePrevious'
+import { ViewDef } from '../lib/history'
 import type { ParsedRouteLayout, ViewMetadata } from '../lib/RouterRegistry'
 
 export interface StackedView {
-  mode: ViewTransiationMode
   view: ViewDef
   meta: ViewMetadata | undefined
   Component?: React.ComponentType<unknown>
@@ -15,67 +13,46 @@ export interface StackedView {
 }
 
 /**
- * Expose navigate function and current view stack and
- * what triggered the stack change or load.
+ * Expose navigate function and current view stack
  */
 export function useViewStack(): {
-  viewStack: StackedView[],
+  viewStack: StackedView[]
   voidViews: StackedView[]
 } {
   const { state, clientRouter } = useRouter() || {}
-  const [transitionState, setTransitionsState] = useState<StackedView[]>([])
-  const [voidState, setVoidState] = useState<StackedView[]>([])
-  const prevViews = usePrevious(state.views)
+  const [viewStack, setViewStack] = useState<StackedView[]>([])
+  const [voidViews, setVoidViews] = useState<StackedView[]>([])
 
   useEffect(() => {
-    if (JSON.stringify(state.views) === JSON.stringify(prevViews)) {
-      return
-    }
-
-    const previousViews = prevViews?.filter(v => v.target !== '_void')
-    const stateViews: ViewDef[] = []
-    const voidViews: StackedView[] = []
+    const regularViews: StackedView[] = []
+    const voidViewsList: StackedView[] = []
 
     state.views.forEach((view) => {
-      if (view.target !== '_void') {
-        stateViews.push(view)
-      } else {
-        const url = new URL(view.url, 'http://dummy.base') // Dummy ensure relative paths work
-        const { Component, meta, Layouts, params } = clientRouter?.getViewComponentByPath(url.pathname) || {}
-        voidViews.push({
-          mode: 'both',
-          view,
-          meta,
-          Component,
-          Layouts,
-          params
-        })
-      }
-    })
+      const url = new URL(view.url, 'http://dummy.base')
+      const { Component, meta, Layouts, params } =
+        clientRouter?.getViewComponentByPath(url.pathname) || {}
 
-    const transitionViews = getTransitionState(stateViews, previousViews).map(({ mode, view }) => {
-      const url = new URL(view.url, 'http://dummy.base') // Dummy ensure relative paths work
-      const { Component, meta, Layouts, params } = clientRouter?.getViewComponentByPath(url.pathname) || {}
-
-      return {
-        mode,
+      const stackedView: StackedView = {
         view,
         meta,
         Component,
         Layouts,
         params
       }
+
+      if (view.target === '_void') {
+        voidViewsList.push(stackedView)
+      } else {
+        regularViews.push(stackedView)
+      }
     })
 
-    setVoidState(voidViews)
-    setTransitionsState(transitionViews)
-
-    // We specifically only want the cleanState change to trigger us
-    // eslint-disable-next-line
-  }, [state.views])
+    setViewStack(regularViews)
+    setVoidViews(voidViewsList)
+  }, [state.views, clientRouter])
 
   return {
-    viewStack: transitionState,
-    voidViews: voidState
+    viewStack,
+    voidViews: voidViews
   }
 }

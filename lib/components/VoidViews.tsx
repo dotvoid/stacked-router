@@ -8,7 +8,6 @@ import { SlotProvider } from '../contexts/SlotProvider'
 import { ErrorBoundary } from './ErrorBoundary'
 
 export function VoidViews({ className, style = {} }: {
-  duration?: number
   className?: string
   style?: CSSProperties
 }) {
@@ -34,7 +33,7 @@ function RenderedViews({ views, className, style = {} }: {
         {views.map(({ view, params, Layouts, Component }) => {
           const LayoutWrappers = (Layouts?.length)
             ? Layouts.filter(layout => layout.key === view.layout)
-            : [{ component: DefaultLayout}] as ParsedRouteLayout[]
+            : [{ component: DefaultLayout }] as ParsedRouteLayout[]
 
           return (
             <ErrorBoundary key={view.id} viewUrl={view.url || '/'}>
@@ -42,7 +41,6 @@ function RenderedViews({ views, className, style = {} }: {
                 key={view.id}
                 id={view.id}
                 width={0}
-                duration={0}
                 params={params}
                 queryParams={view.queryParams}
                 props={view.props}

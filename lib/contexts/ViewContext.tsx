@@ -5,7 +5,6 @@ export interface ViewContextType {
   viewId: string
   isActive: boolean
   width: number
-  duration: number
   layout?: string
   params?: Record<string, string>
   queryParams?: Record<string, string | number | boolean>
@@ -21,7 +20,6 @@ export const ViewContext = createContext<ViewContextType>({
   viewId: '',
   isActive: false,
   width: 0,
-  duration: 0,
   queryParams: {},
   setQueryParams: () => { },
   setProps: () => { },

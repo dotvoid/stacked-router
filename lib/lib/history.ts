@@ -12,15 +12,9 @@ export interface ViewDef {
 }
 
 export interface ViewState {
-  id: string,
+  id: string
   views: ViewDef[]
 }
-
-export type ViewTransiationMode = 'init' | 'both' | 'appear' | 'disappear'
-export type ViewTransitionState = Array<{
-  mode: ViewTransiationMode
-  view: ViewDef
-}>
 
 export function getHistoryState() {
   const { state, length } = window.history
@@ -153,7 +147,7 @@ export function navigateHistory(
   queryParams: Record<string, string | number | boolean>,
   state: ViewState,
   options: {
-    append: boolean,
+    append: boolean
     target?: '_self' | '_top' | '_blank' | '_void'
     props?: Record<string, string | number | boolean>
     layout?: string
@@ -250,45 +244,6 @@ export function navigateHistory(
   })
 }
 
-/**
- * Combines current views and previous views into a single array with transition modes
- */
-export function getTransitionState(
-  currentViews: ViewDef[],
-  prevViews: ViewDef[] | null | undefined
-): ViewTransitionState {
-  // If there are no previous views, all current views are in 'init' mode
-  if (!prevViews || prevViews.length === 0) {
-    return currentViews.map(view => ({
-      mode: 'init',
-      view
-    }))
-  }
-
-  const views: ViewTransitionState = []
-  const disappearingViews: ViewTransitionState = []
-  for (const prevView of prevViews) {
-    const currView = currentViews.find(currView => currView.id === prevView.id)
-    if (currView) {
-      views.push({ view: currView, mode: 'both' })
-    } else {
-      disappearingViews.push({ view: prevView, mode: 'disappear' })
-    }
-  }
-
-  const appearingViews: ViewTransitionState = []
-  for (const currView of currentViews) {
-    if (!views.find(({ view: sortedView }) => sortedView.id === currView.id)) {
-      appearingViews.push({
-        view: currView,
-        mode: 'appear'
-      })
-    }
-  }
-
-  return [...views, ...disappearingViews, ...appearingViews]
-}
-
 function isValidViewStateStructure(value: unknown): value is ViewState {
   if (!value || typeof value !== 'object') {
     return false
@@ -302,13 +257,10 @@ export function paramsAreEqual(
   b: Record<string, string | number | boolean | undefined> | undefined
 ): boolean {
   if (typeof (a) !== typeof (b)) {
-    // If one is undefined they are not equal
     return false
   }
 
   if (typeof (a) === 'undefined' || typeof (b) === 'undefined') {
-    // They are both the same type, if one is undfined both are
-    // and they are equal (must check both for typeguard to work)
     return true
   }
 

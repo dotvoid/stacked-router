@@ -6,7 +6,6 @@ import { updateProps, updateQueryParams } from "../lib/history"
 export function ViewProvider({
   id: viewId,
   width,
-  duration,
   layout,
   children,
   params,
@@ -15,7 +14,6 @@ export function ViewProvider({
 }: PropsWithChildren & {
   id: string
   width: number // Target view width as a percentage
-  duration: number // Animation duration in ms
   layout?: string // Used layout key
   params?: Record<string, string>
   queryParams?: Record<string, string | number | boolean>
@@ -34,7 +32,6 @@ export function ViewProvider({
       viewId,
       isActive,
       width,
-      duration,
       params,
       queryParams,
       props: localProps,

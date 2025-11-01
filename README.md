@@ -96,7 +96,7 @@ export function App() {
    return (
     <div ref={grid} className='w-screen h-screen relative'>
       {/* Stacked views rendered here */}
-      <StackedViewGroup duration={0} className={`flex content-stretch h-screen overflow-hidden`} />
+      <StackedViewGroup className={`flex content-stretch h-screen overflow-hidden`} />
 
       {/* Standalone views rendered here */}
       <VoidViews />
@@ -119,7 +119,7 @@ import View from '@/components/View'
 
 export default function Layout({ children }: PropsWithChildren) {
   const { width, isActive } = useView()
-  const stackedView = cva('h-full grow transition-all duration-10 group/view', {
+  const stackedView = cva('h-full grow transition-all group/view', {
     variants: {
       isActive: {
         true: 'is-active',
@@ -301,7 +301,7 @@ export function App() {
    return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
       <div ref={grid} className='w-screen h-screen relative'>
-        <StackedViewGroup duration={0} className={`flex content-stretch h-screen overflow-hidden`} />
+        <StackedViewGroup className={`flex content-stretch h-screen overflow-hidden`} />
       </div>
     </HeroUIProvider>
   )

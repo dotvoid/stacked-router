@@ -6,7 +6,7 @@ import { StackedViewGroup } from '../lib/components/StackedViewGroup'
 export function App() {
   return (
     <>
-      <StackedViewGroup duration={0} />
+      <StackedViewGroup />
     </>
   )
 }

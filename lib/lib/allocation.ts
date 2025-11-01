@@ -1,5 +1,4 @@
 import { StackedView } from "../hooks/useViewStack"
-import { ViewTransiationMode } from "./history"
 
 export interface BreakpointWidth {
   breakpoint: number // Width in pixels where this breakpoint applies
@@ -9,12 +8,11 @@ export interface BreakpointWidth {
 interface View {
   id: string
   breakpoints: BreakpointWidth[]
-  mode: ViewTransiationMode
 }
 
 export interface ViewAllocation {
   id: string
-  vw: number // Allocated viewport width as a percentage after any transitions
+  vw: number // Allocated viewport width as a percentage
 }
 
 
@@ -22,24 +20,17 @@ export interface ViewAllocation {
  * Calculates viewport width percentage allocation for each view based on current screen width.
  * Ignores views that are not relevant to the current transition. (Like void targets).
  *
- * At the start of a transition appearing views should be allocated 0 width.
- * At the end of a transition disappearing views should be allocated 0 width.
- *
  * @param screenWidthPx Current screen width in pixels
  * @param views Array of views with their breakpoint definitions
- * @param transition Whether the allocations are calculated for stat or end of a transition
- * @returns Array of view allocations with viewport width percentages assigned before and after
+ * @returns Array of view allocations with viewport width percentages
  */
-export function calculateAllocations(screenWidthPx: number, viewStack: StackedView[], transition: 'start' | 'end'): ViewAllocation[] {
-  const ignoredMode = transition === 'start' ? 'appear' : 'disappear'
-
+export function calculateAllocations(screenWidthPx: number, viewStack: StackedView[]): ViewAllocation[] {
   const views = viewStack
-    .filter((sv) => sv.mode !== ignoredMode || sv.view.target !== '_void')
+    .filter((sv) => sv.view.target !== '_void')
     .map(v => {
       return {
         id: v.view.id,
-        breakpoints: v.meta?.breakpoints || [],
-        mode: v.mode
+        breakpoints: v.meta?.breakpoints || []
       }
     })
 

@@ -2,69 +2,39 @@ import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 import { useViewStack } from '../hooks/useViewStack'
 import { ViewProvider } from '../contexts/ViewProvider'
 import { calculateAllocations } from '../lib/allocation'
-import { StackedView } from '../hooks/useViewStack'
+import type { StackedView } from '../hooks/useViewStack'
 import { DefaultLayout } from './DefaultLayout'
 import type { ParsedRouteLayout } from '../lib/RouterRegistry'
 import { SlotProvider } from '../contexts/SlotProvider'
 import { ErrorBoundary } from './ErrorBoundary'
 
-export function StackedViewGroup({ duration = 0, className, style = {} }: {
-  duration?: number
-  className?: string
-  style?: CSSProperties
-}) {
-  return (
-    <ViewStackContainer duration={duration} className={className} style={style} />
-  )
-}
-
-function ViewStackContainer({ duration = 0, className, style = {} }: {
-  duration?: number
+export function StackedViewGroup({
+  className,
+  style = {}
+}: {
   className?: string
   style?: CSSProperties
 }) {
   const { viewStack } = useViewStack()
-  const [openViews, setOpenViews] = useState<StackedView[]>(viewStack)
   const [width, setWidth] = useState(window.innerWidth)
 
   useEffect(() => {
-    // FIXME: Should be at least a tiny bit debounced
     const onResize = () => setWidth(window.innerWidth)
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  useEffect(() => {
-    // Timeout (275ms) that matches animations from css - 25ms to accomodate
-    // for the gap (we want to remove the view just a tiny bit of time
-    // before the the animation ends or the gap will give an ipression
-    // of a slight jerkiness)
-    const timeoutId = setTimeout(() => {
-      const remainingViews = viewStack.filter(({ mode }) => mode !== 'disappear')
-      setOpenViews(remainingViews.map((rv) => {
-        return {
-          ...rv,
-          mode: 'both' // We reset all views to just stay as is
-        }
-      }))
-    }, duration)
-
-    return () => clearTimeout(timeoutId)
-  }, [viewStack, width, duration])
-
-  // Calculate allocations for start and end of transitions
+  // Calculate allocations based on current views
   const allocs = useMemo(() => {
-    // const start = calculateAllocations2(width, viewStack, 'start')
-    return calculateAllocations(width, openViews, 'end')
-  }, [width, openViews])
+    return calculateAllocations(width, viewStack)
+  }, [width, viewStack])
 
-  // Calculate which views actually fit as to how much each view
-  // requires of the available total 100% width.
-  const views = useMemo(() => {
+  // Calculate which views actually fit based on available width
+  const visibleViews = useMemo(() => {
     let totalWidth = 0
     let startIdx = 0
 
-    for (let i = openViews.length - 1; i >= 0; i--) {
+    for (let i = viewStack.length - 1; i >= 0; i--) {
       totalWidth += allocs[i]?.vw || 0
       if (totalWidth > 100) {
         startIdx = i + 1
@@ -72,34 +42,33 @@ function ViewStackContainer({ duration = 0, className, style = {} }: {
       }
     }
 
-    return openViews.slice(startIdx)
-  }, [allocs, openViews])
+    return viewStack.slice(startIdx)
+  }, [allocs, viewStack])
 
-  // Extract actual view widths for all visible/rendered views
+  // Extract actual view widths for visible views
   const viewWidths = useMemo(() => {
-    const viewWidths: number[] = []
-    views.map((_, i) => {
-      viewWidths.push(allocs[i + (openViews.length - views.length)].vw)
-    })
-
-    return viewWidths
-  }, [allocs, openViews, views])
+    const offset = viewStack.length - visibleViews.length
+    return visibleViews.map((_, i) => allocs[i + offset].vw)
+  }, [allocs, viewStack.length, visibleViews])
 
   return (
     <RenderedViews
-      views={views}
+      views={visibleViews}
       widths={viewWidths}
       style={style}
       className={className}
-      duration={duration}
     />
   )
 }
 
-function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
+function RenderedViews({
+  views,
+  widths,
+  className,
+  style = {}
+}: {
   views: StackedView[]
   widths: number[]
-  duration?: number
   className?: string
   style?: CSSProperties
 }) {
@@ -109,12 +78,14 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
         {views.map(({ view, params, Layouts, Component }, i) => {
           // If no component was found for requested view, render a 404 error boundary
           if (!Component) {
-            return <ErrorBoundary
-              key={view.id}
-              viewUrl={view.url}
-              errorCode={404}
-              error={new Error('Not found')}
-            />
+            return (
+              <ErrorBoundary
+                key={view.id}
+                viewUrl={view.url}
+                errorCode={404}
+                error={new Error('Not found')}
+              />
+            )
           }
 
           const LayoutWrappers = (Layouts?.length)
@@ -127,7 +98,6 @@ function RenderedViews({ views, widths, duration = 0, className, style = {} }: {
                 key={view.id}
                 id={view.id}
                 width={widths[i]}
-                duration={duration}
                 params={params}
                 queryParams={view.queryParams}
                 props={view.props}
@@ -149,7 +119,6 @@ function renderNestedLayouts(
   params?: Record<string, unknown>
 ): React.ReactNode {
   if (layouts.length === 0) {
-    // Base case: no more layouts, render the component
     return <Component {...(params || {})} />
   }
 
