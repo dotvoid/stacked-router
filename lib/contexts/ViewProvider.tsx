@@ -25,7 +25,7 @@ export function ViewProvider({
 
   useEffect(() => {
     setIsActive(viewId === state.id)
-  }, [state, viewId])
+  }, [state.id, viewId])
 
   return (
     <ViewContext.Provider value={{

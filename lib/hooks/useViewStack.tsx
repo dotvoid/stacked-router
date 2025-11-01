@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useRef } from 'react'
 import { useRouter } from './useRouter'
 import { ViewDef } from '../lib/history'
 import type { ParsedRouteLayout, ViewMetadata } from '../lib/RouterRegistry'
+import { viewsAreEqual } from '../lib/viewsAreEqual'
 
 export interface StackedView {
   view: ViewDef
@@ -20,10 +21,12 @@ export function useViewStack(): {
   voidViews: StackedView[]
 } {
   const { state, clientRouter } = useRouter() || {}
-  const [viewStack, setViewStack] = useState<StackedView[]>([])
-  const [voidViews, setVoidViews] = useState<StackedView[]>([])
+  const prevViewsRef = useRef<ViewDef[]>(undefined)
 
-  useEffect(() => {
+  // Only recompute if views have actually changed
+  const actuallyChanged = !viewsAreEqual(prevViewsRef.current, state.views)
+
+  const result = useMemo(() => {
     const regularViews: StackedView[] = []
     const voidViewsList: StackedView[] = []
 
@@ -31,12 +34,13 @@ export function useViewStack(): {
       const url = new URL(view.url, 'http://dummy.base')
       const routeData = clientRouter?.getViewComponentByPath(url.pathname)
 
-      // Prefer params from state (if they exist), otherwise use parsed params
+      // Prefer data from state (if it exists), otherwise use parsed data
       const params = view.params || routeData?.params || {}
+      const meta = view.meta || routeData?.meta
 
       const stackedView: StackedView = {
         view,
-        meta: routeData?.meta,
+        meta,
         Component: routeData?.Component,
         Layouts: routeData?.Layouts,
         params
@@ -49,12 +53,15 @@ export function useViewStack(): {
       }
     })
 
-    setViewStack(regularViews)
-    setVoidViews(voidViewsList)
-  }, [state.views, clientRouter])
+    // Update ref after computing
+    prevViewsRef.current = state.views
 
-  return {
-    viewStack,
-    voidViews: voidViews
-  }
+    return {
+      viewStack: regularViews,
+      voidViews: voidViewsList
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actuallyChanged, clientRouter])
+
+  return result
 }
