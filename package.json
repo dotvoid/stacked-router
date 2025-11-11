@@ -1,6 +1,6 @@
 {
-  "name": "stacked-router",
-  "version": "1.0.0",
+  "name": "@dotvoid/stacked-router",
+  "version": "0.0.0",
   "license": "MIT",
   "type": "module",
   "author": {
@@ -27,6 +27,13 @@
     "lint": "eslint .",
     "preversion": "npm test && npm run build",
     "postversion": "git push && git push --tags"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dotvoid/stacked-router.git"
   },
   "peerDependencies": {
     "react": "^19.1.1",
