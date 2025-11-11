@@ -23,7 +23,8 @@
     "dev": "vite",
     "build": "vite build",
     "build:types": "tsc -p tsconfig.lib.json --noEmit false",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint .",
     "preversion": "npm test && npm run build",
     "postversion": "git push && git push --tags"
