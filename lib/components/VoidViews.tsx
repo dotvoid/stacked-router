@@ -40,7 +40,7 @@ function RenderedViews({ views, className, style = {} }: {
               <ViewProvider
                 key={view.id}
                 id={view.id}
-                width={0}
+                vw={0}
                 params={params}
                 queryParams={view.queryParams}
                 props={view.props}

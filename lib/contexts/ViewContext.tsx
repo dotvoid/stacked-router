@@ -4,7 +4,7 @@ import type { ViewState } from '../lib/history'
 export interface ViewContextType {
   viewId: string
   isActive: boolean
-  width: number
+  vw: number
   layout?: string
   params?: Record<string, string>
   queryParams?: Record<string, string | number | boolean>
@@ -19,7 +19,7 @@ export interface ViewContextType {
 export const ViewContext = createContext<ViewContextType>({
   viewId: '',
   isActive: false,
-  width: 0,
+  vw: 0,
   queryParams: {},
   setQueryParams: () => { },
   setProps: () => { },

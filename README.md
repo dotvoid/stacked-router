@@ -60,6 +60,48 @@ Named layouts are named `_layout.name.tsx`.
 
 Layouts support defining named slots. This allows view components to render content which is automatically rendered inside the layout instead. This allow for styling of for example headers and footers in the layout while still allowing the views to have the logic and decide what should be rendered these slots.
 
+### Responsive design
+
+Responsive design needs extra care when working with stacked views as you need to account both for screen width and individual view widths. Stacked views already set style and class names to support container queries with vanilla CSS and Tailwind CSS. This allows you to create responsive layouts that adapt to the width of the view.
+
+Unless overridden, each individual view in the stack defines a container called `view`. Both as vanilla CSS styles and the tailwind class name `@container/view`.
+
+**Usage with vanilla CSS**
+
+```css
+.card {
+  font-size: 0.875rem;
+}
+
+@container view (min-width: 1024px) {
+  .card {
+    font-size: 1.125rem;
+  }
+}
+```
+
+```tsx
+return (
+  <div className='card'>
+    A card
+  </div>
+)
+```
+
+MDN on container queries at [CSS Container Queries](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Container_Queries)
+
+**Usage with Tailwind CSS**
+
+```tsx
+return (
+  <div className='text-sm @lg/view:text-lg'>
+    A card
+  </div>
+)
+```
+
+Tailwind CSS on container queries at [Responsive Design](https://tailwindcss.com/docs/responsive-design)
+
 ### Error Boundaries
 
 Stacked router includes automatic error boundaries around each view that catch rendering errors and display contextual error components.
@@ -107,7 +149,7 @@ export function App() {
 
 **_layout.tsx**
 
-Layouts are optional and are automatically wrapped around all views at the same level or below it in the file tree. This layout handles active state and width css using tailwind.
+Layouts are optional and are automatically wrapped around all views at the same level or below it in the file tree. This layout handles active state and view width (vw percentage) css using tailwind.
 
 ```tsx
 import { type PropsWithChildren } from 'react'
@@ -118,7 +160,7 @@ import { cn } from '@/lib/cn'
 import View from '@/components/View'
 
 export default function Layout({ children }: PropsWithChildren) {
-  const { width, isActive } = useView()
+  const { vw, isActive } = useView()
   const stackedView = cva('h-full grow transition-all group/view', {
     variants: {
       isActive: {
@@ -129,7 +171,7 @@ export default function Layout({ children }: PropsWithChildren) {
   })
 
   return (
-    <StackedView className={cn(stackedView({ isActive }))} style={{ flexBasis: `${width}vw` }}>
+    <StackedView className={cn(stackedView({ isActive }))} style={{ flexBasis: `${vw}vw` }}>
       <View.Root>
         {children}
       </View.Root>

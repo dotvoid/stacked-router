@@ -97,7 +97,7 @@ function RenderedViews({
               <ViewProvider
                 key={view.id}
                 id={view.id}
-                width={widths[i]}
+                vw={widths[i]}
                 params={params}
                 queryParams={view.queryParams}
                 props={view.props}

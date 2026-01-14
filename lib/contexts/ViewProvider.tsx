@@ -5,7 +5,7 @@ import { updateProps, updateQueryParams } from "../lib/history"
 
 export function ViewProvider({
   id: viewId,
-  width,
+  vw,
   layout,
   children,
   params,
@@ -13,7 +13,7 @@ export function ViewProvider({
   props
 }: PropsWithChildren & {
   id: string
-  width: number // Target view width as a percentage
+  vw: number // Target view width as a percentage
   layout?: string // Used layout key
   params?: Record<string, string>
   queryParams?: Record<string, string | number | boolean>
@@ -31,7 +31,7 @@ export function ViewProvider({
     <ViewContext.Provider value={{
       viewId,
       isActive,
-      width,
+      vw,
       params,
       queryParams,
       props: localProps,
