@@ -4,6 +4,22 @@ A client side only, file based, router with path mapping to _"view component_ pr
 
 The router maintains the browser history and navigation and include utilities to integrate with modern UI libraries navigation. The browser location always matches the focused view which allows links to individual views to be copied and shared.
 
+## Installation
+
+Install the package using your preferred package manager:
+
+```bash
+npm install @dotvoid/stacked-router
+```
+
+```bash
+yarn add @dotvoid/stacked-router
+```
+
+```bash
+pnpm add @dotvoid/stacked-router
+```
+
 ## Basic concepts
 
 ### Routing
@@ -11,7 +27,9 @@ Routing is the process of mapping a URL to a view component (file) and its props
 
 Supports a `basePath` property that can be used to automatically prefix all paths in the router navigation.
 
-Supports external routes that are loaded from remote urls. These routes are loaded asynchronously and can be used to load content from external sources. External routes can be defined using the `external` property in the route definition. The `external` property is a string that defines the URL for the external route.
+Supports external routes that are loaded from remote URLs. These routes are loaded asynchronously using dynamic imports and can be used to load components from external sources. External routes are defined using the `external` property in the RouterProvider which accepts an array of objects with a `url` property pointing to the external route module.
+
+
 
 ### Stacked views
 Allow placing multiple views side by side on large screens but still degrade gracefully on smaller screens (mobile). Mobile friendly should also be large desktop screen friendly.
@@ -113,8 +131,11 @@ Stacked router includes automatic error boundaries around each view that catch r
 **main.tsx**
 
 ```tsx
-import { mapRoutes } from 'stacked-router'
-import { RouterProvider } from 'stacked-router'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { mapRoutes } from '@dotvoid/stacked-router'
+import { RouterProvider } from '@dotvoid/stacked-router'
+import { App } from './App'
 
 const modules = import.meta.glob('./views/**/*.tsx', { eager: true })
 const config = mapRoutes(modules, './views')
@@ -126,16 +147,18 @@ createRoot(document.getElementById('root')!).render(
     </RouterProvider>
   </StrictMode>,
 )
-
 ```
 
 **App.tsx**
 
 ```tsx
-import { StackedViewGroup } from 'stacked-router'
+import { StackedViewGroup, VoidViews } from '@dotvoid/stacked-router'
+import { useRef } from 'react'
 
 export function App() {
-   return (
+  const grid = useRef<HTMLDivElement>(null)
+
+  return (
     <div ref={grid} className='w-screen h-screen relative'>
       {/* Stacked views rendered here */}
       <StackedViewGroup className={`flex content-stretch h-screen overflow-hidden`} />
@@ -153,8 +176,8 @@ Layouts are optional and are automatically wrapped around all views at the same 
 
 ```tsx
 import { type PropsWithChildren } from 'react'
-import { StackedView } from 'stacked-router'
-import { useView } from 'stacked-router'
+import { StackedView } from '@dotvoid/stacked-router'
+import { useView } from '@dotvoid/stacked-router'
 import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/cn'
 import View from '@/components/View'
@@ -201,8 +224,11 @@ function PlanningItem({ id }: { id: string }) {
 Use RouterProvider to store all client side routes. Either through a config or by mapping a directory structure.
 
 ```tsx
-import { mapRoutes } from 'stacked-router'
-import { RouterProvider } from 'stacked-router'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { mapRoutes } from '@dotvoid/stacked-router'
+import { RouterProvider } from '@dotvoid/stacked-router'
+import { App } from './App'
 
 const modules = import.meta.glob('./views/**/*.tsx', { eager: true })
 const config = mapRoutes(modules, './views')
@@ -333,16 +359,16 @@ _The configuration includes the actual components which is not visible below, wh
 Stacked router, as most router libraries, expose hooks to allow better integration with (some) UI libraries that can be configured to use the router mechanism inside its UI components like tabs, listboxes, buttons etc. The hook `useNavigate()` handles client-side navigation and `useHref()` can translate router hrefs to native HTML hrefs. Example below is based on HeroUI.
 
 ```jsx
-import { StackedViewGroup } from 'stacked-router'
-import { useHref, useNavigate } from 'stacked-router/hooks'
+import { StackedViewGroup } from '@dotvoid/stacked-router'
+import { useHref, useNavigate } from '@dotvoid/stacked-router'
 import { HeroUIProvider } from '@heroui/react'
 
 export function App() {
   const navigate = useNavigate()
 
-   return (
+  return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
-      <div ref={grid} className='w-screen h-screen relative'>
+      <div className='w-screen h-screen relative'>
         <StackedViewGroup className={`flex content-stretch h-screen overflow-hidden`} />
       </div>
     </HeroUIProvider>
@@ -389,7 +415,7 @@ Integration with shadcn is different as it does not provide the same convenience
 
 ```jsx
 import { Button } from '@/components/ui/button'
-import { Link } from 'stacked-router'
+import { Link } from '@dotvoid/stacked-router'
 
 <Button asChild>
   <Link to="/planning/234">Planning item nr 234</Link>
@@ -400,10 +426,10 @@ import { Link } from 'stacked-router'
 
 For more custom ways of navigating to another view, the hook `useNavigate()`, can be used. It allows sending _invisible_ props (params not visible in URL), specifying a specific layout or that the view should be rendered as a void view (outside of the stack).
 
-The same can be achieved by using the `<Link />` component included in the `stacked-router` package.
+The same can be achieved by using the `<Link />` component included in the `@dotvoid/stacked-router` package.
 
 ```jsx
-import { useNavigate } from 'stacked-router'
+import { useNavigate } from '@dotvoid/stacked-router'
 
 const navigate = useNavigate()
 
@@ -435,7 +461,7 @@ const navigate = useNavigate()
 Used to get query parameter, props, layout or update query parameters or props or if a named layout is used.
 
 ```jsx
-import { useView } from 'stacked-router'
+import { useView } from '@dotvoid/stacked-router'
 
 const { props, setProps, queryParams, setQueryParams, layout } = useView()
 
@@ -483,7 +509,7 @@ export default Customer
 Usage in other views:
 
 ```jsx
-import { useOpenViews } from 'stacked-router'
+import { useOpenViews } from '@dotvoid/stacked-router'
 
 export function CustomerList() {
   // Get all customers
@@ -528,7 +554,8 @@ _Also shows how to close a void view, in this case when when the modal closes._
 **View component**
 
 ```jsx
-import { Fill } from 'stacked-router'
+import { useState } from 'react'
+import { Fill } from '@dotvoid/stacked-router'
 
 export default function User() {
   const [disabled, setDisabled] = useState(false)
@@ -557,7 +584,7 @@ import {
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure,
 } from '@heroui/react'
 import { useEffect } from 'react'
-import { useView, Outlet } from 'stacked-router'
+import { useView, Outlet } from '@dotvoid/stacked-router'
 
 export default function DialogLayout({ children }: {
   children: React.ReactNode
@@ -608,7 +635,7 @@ Create `_error.tsx` files to handle errors at different levels of your applicati
 **_error.tsx**
 
 ```tsx
-import type { ErrorComponentProps } from 'stacked-router'
+import type { ErrorComponentProps } from '@dotvoid/stacked-router'
 
 export default function MyError({ error, reset }: ErrorComponentProps) {
   return (
@@ -634,3 +661,105 @@ views/
 ```
 
 The `reset` function clears the error and re-renders the component. Error boundaries only catch rendering errors, not errors in event handlers or async code.
+
+### External Routes
+
+Stacked router supports loading routes from external URLs using dynamic imports. This enables micro-frontend architectures and loading components from remote sources.
+
+#### Basic External Route Usage
+
+External routes are specified in the RouterProvider using the `external` prop:
+
+```tsx
+import { RouterProvider, mapRoutes } from '@dotvoid/stacked-router'
+
+const modules = import.meta.glob('./views/**/*.tsx', { eager: true })
+const config = mapRoutes(modules, './views')
+
+const externalRoutes = [
+  { url: 'https://cdn.example.com/dashboard-routes.js' },
+  { url: 'https://another-app.com/shared-components.js' }
+]
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <RouterProvider config={config} external={externalRoutes}>
+      <App />
+    </RouterProvider>
+  </StrictMode>
+)
+```
+
+#### External Route Module Format
+
+External route modules must export a `routes` array with the same format as local routes:
+
+```tsx
+// dashboard-routes.js - served from external URL
+import { lazy } from 'react'
+
+const Dashboard = lazy(() => import('./Dashboard'))
+const Settings = lazy(() => import('./Settings'))
+
+export const routes = [
+  {
+    path: '/external/dashboard',
+    component: Dashboard,
+    meta: {
+      breakpoints: [
+        { breakpoint: 1024, minVw: 50 }
+      ]
+    }
+  },
+  {
+    path: '/external/settings',
+    component: Settings,
+    meta: {
+      breakpoints: [
+        { breakpoint: 768, minVw: 60 }
+      ]
+    }
+  }
+]
+```
+
+#### Error Handling
+
+External routes are loaded asynchronously. If loading fails, errors are logged to the console. The router will continue to function with local routes:
+
+```tsx
+// External route loading with error handling
+const externalRoutes = [
+  { url: 'https://cdn.example.com/dashboard-routes.js' }, // May fail to load
+  { url: 'https://backup.example.com/fallback-routes.js' }
+]
+
+// Errors are automatically caught and logged
+<RouterProvider config={config} external={externalRoutes}>
+  <App />
+</RouterProvider>
+```
+
+#### Development Considerations
+
+- External routes are loaded once when RouterProvider mounts
+- Routes are validated and invalid routes are skipped
+- External route registration happens asynchronously
+- Consider loading strategies and fallbacks for production use
+
+#### Module Federation Integration
+
+For more complex micro-frontend setups, external routes work well with Module Federation:
+
+```tsx
+// External module using Module Federation
+const ExternalApp = lazy(() => import('external_app/Routes'))
+
+export const routes = [
+  {
+    path: '/federated/app',
+    component: ExternalApp,
+    meta: { breakpoints: [{ breakpoint: 1024, minVw: 70 }] }
+  }
+]
+```

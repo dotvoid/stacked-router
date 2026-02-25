@@ -23,3 +23,4 @@ export type {
   RouteConfig,
   RouterConfig
 } from './lib/RouterRegistry'
+export type { ExternalRoute } from './contexts/RouterProvider'
