@@ -1,0 +1,765 @@
+# stacked-router
+
+A client side only, file based, router with path mapping to _"view component_ props. Treats opened views as a stack of cards. When a new view (route) is opened this view is added to the top of the stack. As long as enough screen estate is available for all open views they can be displayed side by side. If not the leftmost is hidden until on smaller screens only one view is visible.
+
+The router maintains the browser history and navigation and include utilities to integrate with modern UI libraries navigation. The browser location always matches the focused view which allows links to individual views to be copied and shared.
+
+## Installation
+
+Install the package using your preferred package manager:
+
+```bash
+npm install @dotvoid/stacked-router
+```
+
+```bash
+yarn add @dotvoid/stacked-router
+```
+
+```bash
+pnpm add @dotvoid/stacked-router
+```
+
+## Basic concepts
+
+### Routing
+Routing is the process of mapping a URL to a view component (file) and its props. The router provides a `RouterProvider` component that takes a `config` prop which is an array of route definitions, preferrably mapped from the file structure. Each route definition is an object with a `path` and `component` property. The `path` property is a string that defines the URL path for the route. The `component` property is a React component that will be rendered when the route is matched.
+
+Supports a `basePath` property that can be used to automatically prefix all paths in the router navigation.
+
+Supports external routes that are loaded from remote URLs. These routes are loaded asynchronously using dynamic imports and can be used to load components from external sources. External routes are defined using the `external` property in the RouterProvider which accepts an array of objects with a `url` property pointing to the external route module.
+
+
+
+### Stacked views
+Allow placing multiple views side by side on large screens but still degrade gracefully on smaller screens (mobile). Mobile friendly should also be large desktop screen friendly.
+
+Smaller screens/viewports stacks views on top of each other, hiding views that don't receive as much space as they want..
+
+```text
+..........
+. ..........
+. . ..........
+. . . __________
+. . . |        |
+... . |        |
+  ... |        |
+    ..|        |
+      ----------
+```
+
+Based on the minimum screen estate each view require, a larger screen/viewport could display more views if possible. Open views that do not receive enough screen estate will be hidden.
+
+```text
+..........
+. ---------- ---------- ----------
+. |        | |        | |        |
+. |        | |        | |        |
+. |        | |        | |        |
+..|        | |        | |        |
+  ---------- ---------- ----------
+```
+
+### Void views
+
+Void views are rendered outside the stack. These views do not take up any space in the stack. This is useful for displaying a view in a modal, sheet or popup.
+
+### Layouts
+
+Layouts are used to define the layout of the views in the stack. Layouts can be nested to create more complex layouts. This means that a layout further down the tree is rendered inside a layout further up in the tree.
+
+Default layouts are named `_layout.tsx`.
+
+It is also possible to define named, or keyed, layouts. When navigating to a view, the layouts with the matching name will be used. If no layout with the matching name is found, any default layouts will be used.
+
+Named layouts are named `_layout.name.tsx`.
+
+### Slots
+
+Layouts support defining named slots. This allows view components to render content which is automatically rendered inside the layout instead. This allow for styling of for example headers and footers in the layout while still allowing the views to have the logic and decide what should be rendered these slots.
+
+### Responsive design
+
+Responsive design needs extra care when working with stacked views as you need to account both for screen width and individual view widths. Stacked views already set style and class names to support container queries with vanilla CSS and Tailwind CSS. This allows you to create responsive layouts that adapt to the width of the view.
+
+Unless overridden, each individual view in the stack defines a container called `view`. Both as vanilla CSS styles and the tailwind class name `@container/view`.
+
+**Usage with vanilla CSS**
+
+```css
+.card {
+  font-size: 0.875rem;
+}
+
+@container view (min-width: 1024px) {
+  .card {
+    font-size: 1.125rem;
+  }
+}
+```
+
+```tsx
+return (
+  <div className='card'>
+    A card
+  </div>
+)
+```
+
+MDN on container queries at [CSS Container Queries](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Container_Queries)
+
+**Usage with Tailwind CSS**
+
+```tsx
+return (
+  <div className='text-sm @lg/view:text-lg'>
+    A card
+  </div>
+)
+```
+
+Tailwind CSS on container queries at [Responsive Design](https://tailwindcss.com/docs/responsive-design)
+
+### Error Boundaries
+
+Stacked router includes automatic error boundaries around each view that catch rendering errors and display contextual error components.
+
+## Usage
+
+### Basic setup
+
+**main.tsx**
+
+```tsx
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { mapRoutes } from '@dotvoid/stacked-router'
+import { RouterProvider } from '@dotvoid/stacked-router'
+import { App } from './App'
+
+const modules = import.meta.glob('./views/**/*.tsx', { eager: true })
+const config = mapRoutes(modules, './views')
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <RouterProvider config={ config }>
+      <App />
+    </RouterProvider>
+  </StrictMode>,
+)
+```
+
+**App.tsx**
+
+```tsx
+import { StackedViewGroup, VoidViews } from '@dotvoid/stacked-router'
+import { useRef } from 'react'
+
+export function App() {
+  const grid = useRef<HTMLDivElement>(null)
+
+  return (
+    <div ref={grid} className='w-screen h-screen relative'>
+      {/* Stacked views rendered here */}
+      <StackedViewGroup className={`flex content-stretch h-screen overflow-hidden`} />
+
+      {/* Standalone views rendered here */}
+      <VoidViews />
+    </div>
+  )
+}
+```
+
+**_layout.tsx**
+
+Layouts are optional and are automatically wrapped around all views at the same level or below it in the file tree. This layout handles active state and view width (vw percentage) css using tailwind.
+
+```tsx
+import { type PropsWithChildren } from 'react'
+import { StackedView } from '@dotvoid/stacked-router'
+import { useView } from '@dotvoid/stacked-router'
+import { cva } from 'class-variance-authority'
+import { cn } from '@/lib/cn'
+import View from '@/components/View'
+
+export default function Layout({ children }: PropsWithChildren) {
+  const { vw, isActive } = useView()
+  const stackedView = cva('h-full grow transition-all group/view', {
+    variants: {
+      isActive: {
+        true: 'is-active',
+        false: 'border-s-1 border-s-foreground-300 [.is-active+&]:border-s-background'
+      }
+    }
+  })
+
+  return (
+    <StackedView className={cn(stackedView({ isActive }))} style={{ flexBasis: `${vw}vw` }}>
+      <View.Root>
+        {children}
+      </View.Root>
+    </StackedView>
+  )
+}
+```
+
+**users/[id].tsx**
+
+File names with the structure `[param].tsx` automatically receives `param` in the url as props. As so the url `/users/10104` can be mapped to the below view component.
+
+```tsx
+function PlanningItem({ id }: { id: string }) {
+  const user = useUser(id)
+
+  return (
+    <div>
+      {user?.name ?? ''}
+    </div>
+  )
+}
+```
+
+### Mapping file structure
+
+Use RouterProvider to store all client side routes. Either through a config or by mapping a directory structure.
+
+```tsx
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { mapRoutes } from '@dotvoid/stacked-router'
+import { RouterProvider } from '@dotvoid/stacked-router'
+import { App } from './App'
+
+const modules = import.meta.glob('./views/**/*.tsx', { eager: true })
+const config = mapRoutes(modules, './views')
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <RouterProvider config={ config }>
+      <App />
+    </RouterProvider>
+  </StrictMode>,
+)
+```
+
+**Example view file structure**
+
+A simple file structure with one default view (`views/index.tsx`) and one global layout (`_layout.tsx`) file used for all views. The `plannings/` have one default view that lists plannings and one specific view that opens one planning.
+
+All directories prefixed with underscore (`_`) are ignored. So view specific components are placed in `_component/` directories.
+
+```
+views/
+    plannings/
+        _components/
+            Assignment.tsx
+            AssigmentAction.tsx
+        [id].tsx
+        index.tsx
+    _layout.tsx
+    _layout.dialog.tsx
+    index.tsx
+```
+
+**Example view - `views/plannings/[id].tsx`**
+
+```tsx
+const meta = {
+  breakpoints: [
+    {
+      breakpoint: 720,
+      minVw: 50
+    },
+    {
+      breakpoint: 1024,
+      minVw: 30
+    },
+    {
+      breakpoint: 1280,
+      minVw: 20
+    }
+  ]
+}
+
+function PlanningItem({ id }: { id: string }) {
+  return (
+    <div>
+      Planning item
+    </div>
+  )
+}
+
+PlanningItem.meta = meta
+export default PlanningItem
+```
+
+The `mapRoutes()` creates a route configuration including minimum view width requirements for each breakpoint based on the meta data in each view file.
+
+_The configuration includes the actual components which is not visible below, which is why the layout seems empty._
+
+```json
+{
+  "routes": [
+    {
+      "path": "/",
+      "meta": {
+        "breakpoints": [
+          {
+            "breakpoint": 1024,
+            "minVw": 50
+          },
+          {
+            "breakpoint": 1280,
+            "minVw": 33
+          }
+        ]
+      }
+    },
+    {
+      "path": "/plannings/[id]",
+      "meta": {
+        "breakpoints": [
+          {
+            "breakpoint": 720,
+            "minVw": 50
+          },
+          {
+            "breakpoint": 1024,
+            "minVw": 30
+          },
+          {
+            "breakpoint": 1280,
+            "minVw": 20
+          }
+        ]
+      }
+    },
+    {
+      "path": "/plannings",
+      "meta": {
+        "breakpoints": [
+          {
+            "breakpoint": 1024,
+            "minVw": 50
+          },
+          {
+            "breakpoint": 1280,
+            "minVw": 33
+          }
+        ]
+      }
+    }
+  ],
+  "layouts": {}
+}
+```
+
+### Integrating with UI libraries
+
+Stacked router, as most router libraries, expose hooks to allow better integration with (some) UI libraries that can be configured to use the router mechanism inside its UI components like tabs, listboxes, buttons etc. The hook `useNavigate()` handles client-side navigation and `useHref()` can translate router hrefs to native HTML hrefs. Example below is based on HeroUI.
+
+```jsx
+import { StackedViewGroup } from '@dotvoid/stacked-router'
+import { useHref, useNavigate } from '@dotvoid/stacked-router'
+import { HeroUIProvider } from '@heroui/react'
+
+export function App() {
+  const navigate = useNavigate()
+
+  return (
+    <HeroUIProvider navigate={navigate} useHref={useHref}>
+      <div className='w-screen h-screen relative'>
+        <StackedViewGroup className={`flex content-stretch h-screen overflow-hidden`} />
+      </div>
+    </HeroUIProvider>
+  )
+}
+```
+
+Then it is a simple matter of using the UI libraries components for navigation.
+
+**Link component example**
+
+```jsx
+import { Link } from '@heroui/react'
+
+<Link href='/plannings/234'>Planning item nr 234</Link>
+```
+
+**Dropdown menu example**
+
+```jsx
+import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownSection, DropdownTrigger } from "@heroui/react";
+import { Ellipsis } from 'lucide-react'
+
+<Dropdown>
+  <DropdownTrigger>
+    <Button isIconOnly size="sm" variant="light">
+      <Ellipsis size={18} />
+    </Button>
+  </DropdownTrigger>
+  <DropdownMenu>
+    <DropdownSection showDivider>
+      <DropdownItem key='open' href={`/plannings/234`}>
+        Planning item nr 234
+      </DropdownItem>
+    </DropdownSection>
+  </DropdownMenu>
+</Dropdown>
+}
+```
+
+**shadcn example**
+
+Integration with shadcn is different as it does not provide the same convenience context. Most shadcn components that need navigation (like Button, NavigationMenu) accept an `asChild` prop which makes it easy to wrap the stacked router `Link` component.
+
+```jsx
+import { Button } from '@/components/ui/button'
+import { Link } from '@dotvoid/stacked-router'
+
+<Button asChild>
+  <Link to="/planning/234">Planning item nr 234</Link>
+</Button>
+```
+
+### Custom navigation
+
+For more custom ways of navigating to another view, the hook `useNavigate()`, can be used. It allows sending _invisible_ props (params not visible in URL), specifying a specific layout or that the view should be rendered as a void view (outside of the stack).
+
+The same can be achieved by using the `<Link />` component included in the `@dotvoid/stacked-router` package.
+
+```jsx
+import { useNavigate } from '@dotvoid/stacked-router'
+
+const navigate = useNavigate()
+
+<button onPress={() => {
+  navigate('/planning/234', {
+    options: {
+      fromEvent: '3433'
+    }
+  })
+}}>
+  Navigate to planning item nr 234
+</button>
+
+<button onPress={() => {
+  navigate('/planning/' + crypto.randomUUID(), {
+    options: {
+      fromEvent: '3433',
+      layout: 'dialog',
+      target: '_void'
+    }
+  })
+}}>
+  Create new planning item
+</button>
+```
+
+### useView()
+
+Used to get query parameter, props, layout or update query parameters or props or if a named layout is used.
+
+```jsx
+import { useView } from '@dotvoid/stacked-router'
+
+const { props, setProps, queryParams, setQueryParams, layout } = useView()
+
+<p>
+{layout
+  ? layout
+  : 'No layout or default layout'
+}
+</p>
+
+<button onPress={() => {
+  // Add one prop
+  setProps({ created: true})
+}}>
+  Is created
+</button>
+
+<button onPress={() => {
+  // Set all (clear all) query parameters
+  setQueryParams({}, true)
+}}>
+  Is created
+</button>
+```
+
+### useOpenViews()
+
+Can be used to get information on a subset of open views that match a given criteria. It is only possible to find views that have set the type in the view meta information. Useful to be able to mark rows that match an open view in a table or listing.
+
+Example view:
+
+```jsx
+const meta: ViewMetadata = {
+  type: 'customer'
+}
+
+function Customer({ id }: { id: string }) {
+  return <div>Example component</div>
+}
+
+Customer.meta = meta
+export default Customer
+```
+
+Usage in other views:
+
+```jsx
+import { useOpenViews } from '@dotvoid/stacked-router'
+
+export function CustomerList() {
+  // Get all customers
+  const customers = useCustomers()
+
+  // Get all open customer views
+  const customerViews = useOpenViews('customer')
+
+  return (
+    <div>
+      {customers.map(c => (
+        <div
+          key={c.id}
+          className={customerViews.includes(c.id) ? 'active' : ''}
+        >
+          {c.id}: {c.name}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+It is also possible to match against params (url path params).
+```jsx
+const specificView = useOpenViews('article', {
+  categoryId: 'news',
+  articleId: '456'
+})
+```
+
+### Using layout slots
+
+A slot is defined in the layout using the component `<Outlet/>` and filled with content in the view using the component `<Fill/>`. The prop `name` is used to identify the slot.
+
+The example below is a basic HeroUI Modal displayed in a void view (not in the normal stack). Note how the enabled state of the button can be maintained in the view but still rendered in the footer slot styled by the layout.
+
+The layout could be used by many view components but keep all styling of the header and footer in the layout. The order of the slots in the view component is not important.
+
+_Also shows how to close a void view, in this case when when the modal closes._
+
+**View component**
+
+```jsx
+import { useState } from 'react'
+import { Fill } from '@dotvoid/stacked-router'
+
+export default function User() {
+  const [disabled, setDisabled] = useState(false)
+  const userName = 'John Doe'
+
+  return (
+    <>
+      <Fill slot='header'>
+        {userName}
+      </Fill>
+
+      <p>User content here</p>
+
+      <Fill slot='footer'>
+        <button disabled={disabled}>Save</button>
+      </Fill>
+    </>
+  )
+}
+```
+
+**Dialog layout**
+
+```jsx
+import {
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure,
+} from '@heroui/react'
+import { useEffect } from 'react'
+import { useView, Outlet } from '@dotvoid/stacked-router'
+
+export default function DialogLayout({ children }: {
+  children: React.ReactNode
+}) {
+  const {isOpen, onOpen, onClose} = useDisclosure()
+  const { close } = useView()
+
+  useEffect(() => {
+    onOpen()
+  }, [onOpen])
+
+
+  return (
+    <>
+      <Modal
+        isOpen={isOpen} size='2xl' className='max-h-4/5' onClose={onClose}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            close()
+          }
+        }}
+        hideCloseButton={true}
+      >
+        <ModalContent>
+          <ModalHeader className='flex flex-row gap-4 border-b border-gray-200'>
+            <Outlet slot='header' />{/* Header content from the view */}
+          </ModalHeader>
+
+          <ModalBody className='overflow-y-scroll p-0'>
+            {/* All and any User view content is displayed here */}
+            {children}
+          </ModalBody>
+
+          <ModalFooter className='border-t border-gray-200 flex justify-end gap-4'>
+            <Outlet slot='footer' />{/* Footer content from the view */}
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
+  )
+}
+```
+
+### Error components
+
+Create `_error.tsx` files to handle errors at different levels of your application. The router finds the closest error component up the directory tree.
+
+**_error.tsx**
+
+```tsx
+import type { ErrorComponentProps } from '@dotvoid/stacked-router'
+
+export default function MyError({ error, reset }: ErrorComponentProps) {
+  return (
+    <div>
+      <h2>Something went wrong</h2>
+      <p>{error.message}</p>
+      <button onClick={reset}>Try again</button>
+    </div>
+  )
+}
+```
+
+**File structure example**
+
+```
+views/
+    _error.tsx          # Root fallback for all views
+    users/
+        _error.tsx      # Specific to user section
+        index.tsx       # Uses users/_error.tsx
+    plannings/
+        index.tsx       # Uses root _error.tsx
+```
+
+The `reset` function clears the error and re-renders the component. Error boundaries only catch rendering errors, not errors in event handlers or async code.
+
+### External Routes
+
+Stacked router supports loading routes from external URLs using dynamic imports. This enables micro-frontend architectures and loading components from remote sources.
+
+#### Basic External Route Usage
+
+External routes are specified in the RouterProvider using the `external` prop:
+
+```tsx
+import { RouterProvider, mapRoutes } from '@dotvoid/stacked-router'
+
+const modules = import.meta.glob('./views/**/*.tsx', { eager: true })
+const config = mapRoutes(modules, './views')
+
+const externalRoutes = [
+  { url: 'https://cdn.example.com/dashboard-routes.js' },
+  { url: 'https://another-app.com/shared-components.js' }
+]
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <RouterProvider config={config} external={externalRoutes}>
+      <App />
+    </RouterProvider>
+  </StrictMode>
+)
+```
+
+#### External Route Module Format
+
+External route modules must export a `routes` array with the same format as local routes:
+
+```tsx
+// dashboard-routes.js - served from external URL
+import { lazy } from 'react'
+
+const Dashboard = lazy(() => import('./Dashboard'))
+const Settings = lazy(() => import('./Settings'))
+
+export const routes = [
+  {
+    path: '/external/dashboard',
+    component: Dashboard,
+    meta: {
+      breakpoints: [
+        { breakpoint: 1024, minVw: 50 }
+      ]
+    }
+  },
+  {
+    path: '/external/settings',
+    component: Settings,
+    meta: {
+      breakpoints: [
+        { breakpoint: 768, minVw: 60 }
+      ]
+    }
+  }
+]
+```
+
+#### Error Handling
+
+External routes are loaded asynchronously. If loading fails, errors are logged to the console. The router will continue to function with local routes:
+
+```tsx
+// External route loading with error handling
+const externalRoutes = [
+  { url: 'https://cdn.example.com/dashboard-routes.js' }, // May fail to load
+  { url: 'https://backup.example.com/fallback-routes.js' }
+]
+
+// Errors are automatically caught and logged
+<RouterProvider config={config} external={externalRoutes}>
+  <App />
+</RouterProvider>
+```
+
+#### Development Considerations
+
+- External routes are loaded once when RouterProvider mounts
+- Routes are validated and invalid routes are skipped
+- External route registration happens asynchronously
+- Consider loading strategies and fallbacks for production use
+
+#### Module Federation Integration
+
+For more complex micro-frontend setups, external routes work well with Module Federation:
+
+```tsx
+// External module using Module Federation
+const ExternalApp = lazy(() => import('external_app/Routes'))
+
+export const routes = [
+  {
+    path: '/federated/app',
+    component: ExternalApp,
+    meta: { breakpoints: [{ breakpoint: 1024, minVw: 70 }] }
+  }
+]
+```

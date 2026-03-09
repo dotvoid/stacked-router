@@ -1,0 +1,36 @@
+import { useRouter } from '../hooks/useRouter'
+import { relativeUrl } from '../lib/href'
+import { getHistoryState } from '../lib/history'
+
+interface NavigateOptions {
+  target?: '_self' | '_top' | '_blank' | '_void'
+  props?: Record<string, string | number | boolean>
+  layout?: string
+}
+
+/**
+ * Hook to provide a navigate function that can be used to integrate with UI libraries.
+ *
+ * @example
+ * import { useHref, useNavigate } from '@/router/hooks'
+ * const navigate = useNavigate()
+ *
+ * <HeroUIProvider useHref={useHref} navigate={navigate}>
+ *  ...
+ * <HeroUIProvider>
+ */
+export function useNavigate() {
+  const { navigate } = useRouter()
+
+  return (href: string, options?: NavigateOptions) => {
+    const { state } = getHistoryState()
+    const { url, queryParams } = relativeUrl(href)
+
+    navigate(state.id || '', url, queryParams, {
+      append: false,
+      target: options?.target || '_self',
+      props: options?.props,
+      layout: options?.layout
+    })
+  }
+}
