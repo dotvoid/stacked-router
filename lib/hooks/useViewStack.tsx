@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useRef } from 'react'
 import { useRouter } from './useRouter'
 import { ViewDef } from '../lib/history'
 import type { ParsedRouteLayout, ViewMetadata } from '../lib/RouterRegistry'
@@ -14,19 +14,38 @@ export interface StackedView {
 }
 
 /**
- * Expose navigate function and current view stack
+ * Expose the current view stack, split into regular and `_void` views.
+ *
+ * A ref-backed cache lets consumers re-render for unrelated reasons
+ * without rebuilding the stack every time. We recompute only when
+ * `state.views` is no longer deeply equal to the views we last built
+ * from, or when `clientRouter` changes reference. The cache is purely
+ * derived from those inputs, so computing it during render (and a
+ * discarded concurrent/StrictMode render) is safe.
  */
 export function useViewStack(): {
   viewStack: StackedView[]
   voidViews: StackedView[]
 } {
   const { state, clientRouter } = useRouter() || {}
-  const prevViewsRef = useRef<ViewDef[]>(undefined)
 
-  // Only recompute if views have actually changed
-  const actuallyChanged = !viewsAreEqual(prevViewsRef.current, state.views)
+  type Cache = {
+    views: ViewDef[] | undefined
+    clientRouter: typeof clientRouter
+    result: { viewStack: StackedView[], voidViews: StackedView[] }
+  }
+  const cacheRef = useRef<Cache | null>(null)
 
-  const result = useMemo(() => {
+  // Cheap reference check first; only fall through to the deep
+  // `viewsAreEqual` check when the reference actually changed.
+  const cached = cacheRef.current
+  const viewsRefDiffers = cached?.views !== state.views
+  const routerRefDiffers = cached?.clientRouter !== clientRouter
+  const needsRecompute = !cached
+    || routerRefDiffers
+    || (viewsRefDiffers && !viewsAreEqual(cached.views, state.views))
+
+  if (needsRecompute) {
     const regularViews: StackedView[] = []
     const voidViewsList: StackedView[] = []
 
@@ -53,15 +72,19 @@ export function useViewStack(): {
       }
     })
 
-    // Update ref after computing
-    prevViewsRef.current = state.views
-
-    return {
-      viewStack: regularViews,
-      voidViews: voidViewsList
+    cacheRef.current = {
+      views: state.views,
+      clientRouter,
+      result: { viewStack: regularViews, voidViews: voidViewsList }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actuallyChanged, clientRouter])
+  } else if (viewsRefDiffers) {
+    // Deeply equal but a new array reference: refresh the stored
+    // reference so future cheap checks short-circuit instead of
+    // re-running viewsAreEqual on every render.
+    cached!.views = state.views
+  }
 
-  return result
+  // Safe: either we just populated the cache, or `needsRecompute`
+  // was false, which implies `cached` was non-null.
+  return cacheRef.current!.result
 }
