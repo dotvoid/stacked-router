@@ -1,4 +1,4 @@
-import { PropsWithChildren, useEffect, useState } from "react"
+import { PropsWithChildren, useEffect, useRef, useState } from "react"
 import { ViewContext } from "./ViewContext"
 import { useRouter } from "../hooks/useRouter"
 import { updateProps, updateQueryParams } from "../lib/history"
@@ -23,6 +23,23 @@ export function ViewProvider({
   const [isActive, setIsActive] = useState(viewId === state.id)
   const [localProps, setLocalProps] = useState(props || {})
 
+  // Refs mirror the latest localProps + queryParams so the
+  // setProps / setQueryParams callbacks below merge against the
+  // current value, not the closure value captured at first render.
+  // Without this, two setProps calls in the same tick (or after
+  // an unrelated re-render) overwrite each other - the second
+  // merges against the FIRST render's parent props, dropping the
+  // first call's writes.
+  const localPropsRef = useRef(localProps)
+  useEffect(() => {
+    localPropsRef.current = localProps
+  }, [localProps])
+
+  const queryParamsRef = useRef(queryParams)
+  useEffect(() => {
+    queryParamsRef.current = queryParams
+  }, [queryParams])
+
   useEffect(() => {
     setIsActive(viewId === state.id)
   }, [state.id, viewId])
@@ -38,9 +55,8 @@ export function ViewProvider({
       layout,
       state,
       setProps: (partialProps, replaceAll) => {
-        const newProps = (replaceAll)
-          ? partialProps || {}
-          : { ...props, ...partialProps }
+        const base = replaceAll ? {} : (localPropsRef.current ?? {})
+        const newProps = { ...base, ...(partialProps || {}) }
 
         for (const key in newProps) {
           if (newProps[key] === undefined) {
@@ -52,9 +68,12 @@ export function ViewProvider({
         updateProps(viewId, newProps as Record<string, string | number | boolean>)
       },
       setQueryParams: (partialQueryParams, replaceAll) => {
-        const newQueryParams = (replaceAll !== true)
-          ? { ...props || {} } // Use existing query params as base
-          : {} // Start with empty object to replace existing params
+        // Merge against the LATEST queryParams (via ref), not
+        // props. The original code read `props` here, which is
+        // (a) the wrong field entirely and (b) a stale closure.
+        const newQueryParams: Record<string, string | number | boolean> = (replaceAll !== true)
+          ? { ...(queryParamsRef.current ?? {}) }
+          : {}
 
         let updateParams = false
         for (const key in partialQueryParams) {
@@ -74,7 +93,11 @@ export function ViewProvider({
         }
       },
       queryParam: (key) => {
-        return props?.[key]
+        // Read from queryParams, not props. The original code
+        // returned props[key] here which was a separate bug from
+        // the merge issues above but the same root cause:
+        // confusing the two field sets.
+        return queryParams?.[key]
       },
       close: () => {
         close(viewId)

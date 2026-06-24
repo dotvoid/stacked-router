@@ -85,28 +85,37 @@ export function updateQueryParams(
   queryParams: Record<string, string | number | boolean>
 ) {
   const { state } = getHistoryState()
-  const newState = { ...state }
 
+  // Clone the array AND the touched view object so the references
+  // differ from the prior state. Consumers (notably useViewStack)
+  // ref-key their cache off `state.views` and per-view objects; an
+  // in-place mutation would update the URL bar but leave the
+  // React tree showing the cached, stale queryParams.
   let updateView = -1
-  for (let n = 0; n < newState.views.length; n++) {
-    if (newState.views[n].id === id) {
-      if (!paramsAreEqual(newState.views[n].queryParams, queryParams)) {
-        newState.views[n].queryParams = queryParams
+  for (let n = 0; n < state.views.length; n++) {
+    if (state.views[n].id === id) {
+      if (!paramsAreEqual(state.views[n].queryParams, queryParams)) {
         updateView = n
       }
       break
     }
   }
+  if (updateView === -1) return
 
-  if (updateView > -1) {
-    const url = new URL(window.location.href)
-    url.search = new URLSearchParams(
-      Object.entries(queryParams).map(([key, value]) => [key, String(value)])
-    ).toString()
+  const url = new URL(window.location.href)
+  url.search = new URLSearchParams(
+    Object.entries(queryParams).map(([key, value]) => [key, String(value)])
+  ).toString()
 
-    newState.views[updateView].url = url.toString()
-    replaceHistoryState(url.toString(), newState)
+  const nextViews = [...state.views]
+  nextViews[updateView] = {
+    ...state.views[updateView],
+    queryParams,
+    url: url.toString()
   }
+  const newState: ViewState = { ...state, views: nextViews }
+
+  replaceHistoryState(url.toString(), newState)
 }
 
 export function updateProps(
@@ -114,22 +123,29 @@ export function updateProps(
   props: Record<string, string | number | boolean>
 ) {
   const { state } = getHistoryState()
-  const newState = { ...state }
 
+  // Same clone-on-touch pattern as updateQueryParams: array
+  // reference differs + touched view reference differs, so
+  // downstream caches see real change.
   let updateView = -1
-  for (let n = 0; n < newState.views.length; n++) {
-    if (newState.views[n].id === id) {
-      if (!paramsAreEqual(newState.views[n].props, props)) {
-        newState.views[n].props = props
+  for (let n = 0; n < state.views.length; n++) {
+    if (state.views[n].id === id) {
+      if (!paramsAreEqual(state.views[n].props, props)) {
         updateView = n
       }
       break
     }
   }
+  if (updateView === -1) return
 
-  if (updateView > -1) {
-    replaceHistoryState(window.location.href, newState)
+  const nextViews = [...state.views]
+  nextViews[updateView] = {
+    ...state.views[updateView],
+    props
   }
+  const newState: ViewState = { ...state, views: nextViews }
+
+  replaceHistoryState(window.location.href, newState)
 }
 
 export function closeView(
