@@ -1,5 +1,6 @@
 import { createContext } from 'react'
 import type { ViewState } from '../lib/history'
+import type { ViewMetadata } from '../lib/RouterRegistry'
 
 export interface ViewContextType {
   viewId: string
@@ -12,6 +13,12 @@ export interface ViewContextType {
   queryParam: (key: string) => string | number | boolean | undefined
   props?: Record<string, string | number | boolean>
   setProps: (queryParams: Record<string, string | number | boolean | undefined>, replaceAll?: boolean) => void
+  /**
+   * Replace this view's metadata while it is open - for a view whose
+   * layout changes and needs other widths (a side pane opening). Pass
+   * the full metadata; the view's route metadata is the usual base.
+   */
+  setMeta: (meta: ViewMetadata) => void
   close: () => void,
   state: ViewState
 }
@@ -23,6 +30,7 @@ export const ViewContext = createContext<ViewContextType>({
   queryParams: {},
   setQueryParams: () => { },
   setProps: () => { },
+  setMeta: () => { },
   queryParam: () => { return undefined },
   close: () => { },
   state: { id: '', views: [] }

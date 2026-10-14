@@ -148,6 +148,37 @@ export function updateProps(
   replaceHistoryState(window.location.href, newState)
 }
 
+/**
+ * Replace a view's metadata - its type and width breakpoints - for as
+ * long as the view stays in the history. A view whose layout changes
+ * while it is open (a side pane opening, say) uses this to ask for the
+ * width the new layout needs; the stack reallocates widths at once.
+ *
+ * The metadata lives in the history entry, so back and forward restore
+ * it with the view. It must be structured-cloneable plain data.
+ */
+export function updateMeta(id: string, meta: ViewMetadata) {
+  const { state } = getHistoryState()
+  const index = state.views.findIndex((view) => view.id === id)
+  if (index === -1 || metaIsEqual(state.views[index].meta, meta)) return
+
+  // Clone-on-touch, as updateQueryParams does, so caches keyed on the
+  // views array and view objects see the change.
+  const nextViews = [...state.views]
+  nextViews[index] = { ...state.views[index], meta }
+  replaceHistoryState(window.location.href, { ...state, views: nextViews })
+}
+
+/** Whether two metadata objects have the same type and breakpoints. */
+export function metaIsEqual(a: ViewMetadata | undefined, b: ViewMetadata | undefined): boolean {
+  if (a === b) return true
+  if (!a || !b || a.type !== b.type) return false
+  const ab = a.breakpoints ?? []
+  const bb = b.breakpoints ?? []
+  return ab.length === bb.length && ab.every((x, i) =>
+    x.breakpoint === bb[i].breakpoint && x.minVw === bb[i].minVw)
+}
+
 export function closeView(
   viewId: string | null,
   state: ViewState

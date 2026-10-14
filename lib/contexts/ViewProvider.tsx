@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect, useRef, useState } from "react"
 import { ViewContext } from "./ViewContext"
 import { useRouter } from "../hooks/useRouter"
-import { updateProps, updateQueryParams } from "../lib/history"
+import { updateMeta, updateProps, updateQueryParams } from "../lib/history"
 
 export function ViewProvider({
   id: viewId,
@@ -98,6 +98,9 @@ export function ViewProvider({
         // the merge issues above but the same root cause:
         // confusing the two field sets.
         return queryParams?.[key]
+      },
+      setMeta: (meta) => {
+        updateMeta(viewId, meta)
       },
       close: () => {
         close(viewId)

@@ -1,4 +1,4 @@
-import { ViewDef } from './history'
+import { metaIsEqual, type ViewDef } from './history'
 
 /**
  * Shallow comparison for view arrays - checks if views have actually changed
@@ -46,15 +46,10 @@ export function viewsAreEqual(
       return false
     }
 
-    // Compare meta (if present)
-    if (a.meta !== b.meta) {
-      if (!a.meta || !b.meta) {
-        return false
-      }
-      // Add meta comparison if needed
-      if (a.meta.type !== b.meta.type) {
-        return false
-      }
+    // Compare meta: type and breakpoints, since a view may change its
+    // breakpoints while open (setMeta) and widths must follow.
+    if (!metaIsEqual(a.meta, b.meta)) {
+      return false
     }
   }
 
