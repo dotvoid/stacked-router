@@ -1,7 +1,8 @@
-import { PropsWithChildren, useEffect, useRef, useState } from "react"
+import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "react"
 import { ViewContext } from "./ViewContext"
 import { useRouter } from "../hooks/useRouter"
 import { updateMeta, updateProps, updateQueryParams } from "../lib/history"
+import type { ViewMetadata } from "../lib/RouterRegistry"
 
 export function ViewProvider({
   id: viewId,
@@ -43,6 +44,12 @@ export function ViewProvider({
   useEffect(() => {
     setIsActive(viewId === state.id)
   }, [state.id, viewId])
+
+  // Stable across renders, so a view can list it in an effect's
+  // dependencies without that effect running on every render.
+  const setMeta = useCallback((meta: ViewMetadata) => {
+    updateMeta(viewId, meta)
+  }, [viewId])
 
   return (
     <ViewContext.Provider value={{
@@ -99,9 +106,7 @@ export function ViewProvider({
         // confusing the two field sets.
         return queryParams?.[key]
       },
-      setMeta: (meta) => {
-        updateMeta(viewId, meta)
-      },
+      setMeta,
       close: () => {
         close(viewId)
       }

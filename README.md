@@ -487,6 +487,22 @@ const { props, setProps, queryParams, setQueryParams, layout } = useView()
 </button>
 ```
 
+#### Changing a view's widths while it is open
+
+A view's width breakpoints come from its route's metadata. A view whose
+layout changes while it is open - a side pane opening, say - can ask for
+other widths with `setMeta`. The stack reallocates widths at once, and
+the metadata is kept in the view's history entry, so back and forward
+restore it. Pass the full metadata; `setMeta` is stable across renders.
+
+```jsx
+const { setMeta } = useView()
+
+useEffect(() => {
+  setMeta(paneOpen ? metaWithPane : meta)
+}, [paneOpen, setMeta])
+```
+
 ### useOpenViews()
 
 Can be used to get information on a subset of open views that match a given criteria. It is only possible to find views that have set the type in the view meta information. Useful to be able to mark rows that match an open view in a table or listing.
