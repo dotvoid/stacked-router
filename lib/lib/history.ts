@@ -219,13 +219,28 @@ export function navigateHistory(
   const parsedRoute = registry.getViewComponentByPath(urlWithParams.pathname)
   const params = parsedRoute?.params || {}
 
-  // Find index of view if we alre ady have this view open
-  const existing = views.find((view) => {
+  // Find index of view if we already have this view open
+  const found = views.find((view) => {
     return url === view.url
   })
 
-  // Don't do anything if we clicked current open url and don't force append
+  // Revisiting an open view with props hands it the new props: the URL
+  // is the same, but what the view is scoped to (an assignment, say)
+  // is not. Without props, the view keeps those it has. A new view is
+  // appended rather than revisited when `append` is set.
+  let existing = found
+  if (found && !options.append && options.props !== undefined
+    && !paramsAreEqual(found.props, options.props)) {
+    existing = { ...found, props: options.props }
+    views[views.indexOf(found)] = existing
+  }
+
+  // Clicking the current open url only passes on new props, if any,
+  // unless forced to append
   if (options.target !== '_top' && !options.append && existing?.id === state.id) {
+    if (existing !== found) {
+      replaceHistoryState(url, { id: existing.id, views })
+    }
     return
   }
 

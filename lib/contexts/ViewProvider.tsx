@@ -1,7 +1,7 @@
 import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "react"
 import { ViewContext } from "./ViewContext"
 import { useRouter } from "../hooks/useRouter"
-import { updateMeta, updateProps, updateQueryParams } from "../lib/history"
+import { paramsAreEqual, updateMeta, updateProps, updateQueryParams } from "../lib/history"
 import type { ViewMetadata } from "../lib/RouterRegistry"
 
 export function ViewProvider({
@@ -23,6 +23,17 @@ export function ViewProvider({
   const { state, close } = useRouter()
   const [isActive, setIsActive] = useState(viewId === state.id)
   const [localProps, setLocalProps] = useState(props || {})
+
+  // New props from the parent replace the local ones: a view revisited
+  // with other props (the same URL scoped to something else) must see
+  // them. Adjusted during render, React's pattern for state that
+  // follows a prop. The view's own setProps writes come back here
+  // through the history as the same values, so they are not undone.
+  const [parentProps, setParentProps] = useState(props)
+  if (!paramsAreEqual(props, parentProps)) {
+    setParentProps(props)
+    setLocalProps(props || {})
+  }
 
   // Refs mirror the latest localProps + queryParams so the
   // setProps / setQueryParams callbacks below merge against the

@@ -428,6 +428,8 @@ For more custom ways of navigating to another view, the hook `useNavigate()`, ca
 
 The same can be achieved by using the `<Link />` component included in the `@dotvoid/stacked-router` package.
 
+Navigating to a URL that is already open focuses that view instead of opening a second one. Props passed along replace the open view's props, and `useView().props` follows. So a view opened once per record (a finder scoped to one assignment, then another) always shows the latest one. Without props, the open view keeps the props it has.
+
 ```jsx
 import { useNavigate } from '@dotvoid/stacked-router'
 
