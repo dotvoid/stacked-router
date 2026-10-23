@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 import { useViewStack } from '../hooks/useViewStack'
 import { ViewProvider } from '../contexts/ViewProvider'
-import { calculateAllocations } from '../lib/allocation'
+import { calculateAllocations, firstVisibleIndex } from '../lib/allocation'
 import type { StackedView } from '../hooks/useViewStack'
 import { DefaultLayout } from './DefaultLayout'
 import type { ParsedRouteLayout } from '../lib/RouterRegistry'
@@ -31,18 +31,7 @@ export function StackedViewGroup({
 
   // Calculate which views actually fit based on available width
   const visibleViews = useMemo(() => {
-    let totalWidth = 0
-    let startIdx = 0
-
-    for (let i = viewStack.length - 1; i >= 0; i--) {
-      totalWidth += allocs[i]?.vw || 0
-      if (totalWidth > 100) {
-        startIdx = i + 1
-        break
-      }
-    }
-
-    return viewStack.slice(startIdx)
+    return viewStack.slice(firstVisibleIndex(allocs.map((a) => a?.vw || 0)))
   }, [allocs, viewStack])
 
   // Extract actual view widths for visible views

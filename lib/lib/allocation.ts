@@ -128,3 +128,19 @@ function getMinimumVwForView(view: View, screenWidthPx: number): number {
   // Return the minimum vw for the applicable breakpoint, or default to 100 if none found
   return applicableBreakpoint ? applicableBreakpoint.minVw : 100
 }
+
+/**
+ * Index of the first view that is on screen. Views are laid out left
+ * to right and only the right-most ones that fit in 100vw are shown,
+ * so everything before this index is hidden off the left edge.
+ *
+ * @param widths Each view's allocated width in vw, in stack order
+ */
+export function firstVisibleIndex(widths: number[]): number {
+  let total = 0
+  for (let i = widths.length - 1; i >= 0; i--) {
+    total += widths[i] || 0
+    if (total > 100) return i + 1
+  }
+  return 0
+}

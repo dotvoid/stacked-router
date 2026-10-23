@@ -1,6 +1,7 @@
 import { emit } from './events'
 import { parseSearch } from './href'
 import type { RouterRegistry, ViewMetadata } from './RouterRegistry'
+import { calculateAllocations, firstVisibleIndex } from './allocation'
 
 export interface ViewDef {
   id: string
@@ -185,8 +186,12 @@ export function closeView(
 ) {
   const views = [...state.views].filter((view) => view.id !== viewId)
 
-  const newState = { ...state, views }
-  replaceHistoryState(views.at(-1)?.url ?? '', newState)
+  // The active view stays active if it is still open. Closing the active
+  // view hands focus to the last open one, so the state never points at
+  // a view that is gone.
+  const active = views.find((view) => view.id === state.id) ?? views.at(-1)
+  const newState = { ...state, id: active?.id ?? '', views }
+  replaceHistoryState(active?.url ?? '', newState)
 }
 
 export function navigateHistory(
@@ -266,11 +271,29 @@ export function navigateHistory(
       return
     }
 
-    // Focus the already opened view
+    // An already opened view that is on screen is focused where it is.
+    // One that is hidden off the left edge (a narrow screen showing a
+    // single view, say) is moved instead: taken out of its place and
+    // opened after the current view, as a new history entry. It then
+    // appears where a newly opened view would, Back returns to where
+    // the reader came from, and the view keeps its state.
     if (!options.append && existing) {
-      replaceHistoryState(url, {
+      if (isViewVisible(registry, views, existing.id)) {
+        replaceHistoryState(url, {
+          id: existing.id,
+          views
+        })
+        return
+      }
+
+      const remaining = views.filter((view) => view.id !== existing.id)
+      const currIndex = remaining.findIndex((view) => view.id === viewId)
+      const movedViews = currIndex < 0
+        ? [...remaining, existing]
+        : [...remaining.slice(0, currIndex + 1), existing]
+      pushHistoryState(url, {
         id: existing.id,
-        views
+        views: movedViews
       })
       return
     }
@@ -349,4 +372,31 @@ export function paramsAreEqual(
   }
 
   return true
+}
+
+/**
+ * Whether a view is on screen at the current window width, by the same
+ * rule the stacked views are rendered with: only the right-most views
+ * that fit are shown. Views opened into a void outlet take no width and
+ * are not part of the stack. A view without stored metadata (the first
+ * one loaded, say) is measured by its route's, as rendering does.
+ */
+function isViewVisible(registry: RouterRegistry, views: ViewDef[], id: string): boolean {
+  const stack = views.filter((view) => view.target !== '_void')
+  const index = stack.findIndex((view) => view.id === id)
+  if (index < 0) return false
+  const widths = calculateAllocations(
+    window.innerWidth,
+    stack.map((view) => ({ view, meta: view.meta || routeMeta(registry, view.url) }))
+  ).map((a) => a.vw)
+  return index >= firstVisibleIndex(widths)
+}
+
+/** The route's metadata for a view's URL, the fallback rendering uses. */
+function routeMeta(registry: RouterRegistry, url: string): ViewMetadata | undefined {
+  try {
+    return registry.getViewComponentByPath(new URL(url, window.location.origin).pathname)?.meta
+  } catch {
+    return undefined
+  }
 }
